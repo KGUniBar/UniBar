@@ -32,7 +32,7 @@ function Dashboard() {
         <div className="sidebar-menu">
           <div className="menu-item active">홀</div>
           <div className="menu-item">예약</div>
-          <div className="menu-item">주문</div>
+          <div className="menu-item" onClick={() => navigate('/order')}>주문</div>
           <div className="menu-item">주방</div>
           <div className="menu-item">잔여 주문 내역</div>
           <div className="menu-item">금일 주문 내역</div>

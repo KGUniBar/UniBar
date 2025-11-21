@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import Login from './pages/Login.tsx'
 import Dashboard from './pages/Dashboard.tsx'
+import OrderList from './pages/OrderList.tsx'
+import OrderDetail from './pages/OrderDetail.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -11,6 +13,8 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/order" element={<OrderList />} />
+        <Route path="/order/:tableId" element={<OrderDetail />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
