@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import './Setting.css'
@@ -25,6 +25,10 @@ function Setting() {
   const [isMenuEditModalOpen, setIsMenuEditModalOpen] = useState(false)
   const [editMenuName, setEditMenuName] = useState<string>('')
   const [editMenuPrice, setEditMenuPrice] = useState<string>('')
+  
+  // QR 코드 관리 상태
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // localStorage에서 테이블 수 불러오기
   useEffect(() => {
@@ -39,6 +43,14 @@ function Setting() {
     const savedMenus = localStorage.getItem('menus')
     if (savedMenus) {
       setMenus(JSON.parse(savedMenus))
+    }
+  }, [])
+
+  // localStorage에서 QR 코드 이미지 불러오기
+  useEffect(() => {
+    const savedQrCode = localStorage.getItem('qrCodeImage')
+    if (savedQrCode) {
+      setQrCodeImage(savedQrCode)
     }
   }, [])
 
@@ -161,6 +173,37 @@ function Setting() {
     if (numericValue === '' || /^\d+$/.test(numericValue)) {
       setter(numericValue === '' ? '' : parseInt(numericValue, 10).toLocaleString())
     }
+  }
+
+  // QR 코드 이미지 업로드
+  const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // 이미지 파일인지 확인
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64String = reader.result as string
+      setQrCodeImage(base64String)
+      localStorage.setItem('qrCodeImage', base64String)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // QR 코드 등록 버튼 클릭
+  const handleQrCodeRegisterClick = () => {
+    fileInputRef.current?.click()
   }
 
   return (
@@ -317,10 +360,45 @@ function Setting() {
             </div>
           )}
 
-          {/* QR 코드 화면 (나중에 구현) */}
+          {/* QR 코드 화면 */}
           {activeTab === 'qrcode' && (
             <div className="qrcode-section">
-              <div>QR 코드 관리 화면 (구현 예정)</div>
+              <div className="qrcode-controls">
+                <button className="qrcode-register-button" onClick={handleQrCodeRegisterClick}>
+                  QR 코드 등록하기
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleQrCodeUpload}
+                  style={{ display: 'none' }}
+                />
+                <div className="qrcode-preview">
+                  {qrCodeImage ? (
+                    <img src={qrCodeImage} alt="QR Code" className="qrcode-image" />
+                  ) : (
+                    <div className="qrcode-sample">
+                      <div className="qrcode-sample-text">샘플 QR 코드</div>
+                      <div className="qrcode-sample-placeholder">
+                        <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="200" height="200" fill="#f0f0f0"/>
+                          <rect x="20" y="20" width="40" height="40" fill="#000"/>
+                          <rect x="80" y="20" width="20" height="20" fill="#000"/>
+                          <rect x="120" y="20" width="40" height="40" fill="#000"/>
+                          <rect x="20" y="80" width="20" height="20" fill="#000"/>
+                          <rect x="60" y="80" width="20" height="20" fill="#000"/>
+                          <rect x="100" y="80" width="20" height="20" fill="#000"/>
+                          <rect x="140" y="80" width="20" height="20" fill="#000"/>
+                          <rect x="20" y="120" width="40" height="40" fill="#000"/>
+                          <rect x="80" y="140" width="20" height="20" fill="#000"/>
+                          <rect x="120" y="120" width="40" height="40" fill="#000"/>
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
