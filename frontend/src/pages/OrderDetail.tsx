@@ -164,6 +164,7 @@ function OrderDetail() {
     const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]')
     const now = new Date()
     const orderTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    const orderDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     
     const newOrder = {
       id: Date.now(),
@@ -175,6 +176,7 @@ function OrderDetail() {
         quantity: item.quantity
       })),
       orderTime: orderTime,
+      orderDate: orderDate,
       totalPrice: totalPrice
     }
     
