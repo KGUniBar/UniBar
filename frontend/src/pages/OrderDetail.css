@@ -62,6 +62,17 @@
   gap: 20px;
 }
 
+.no-menu-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  text-align: center;
+  font-size: 18px;
+  color: #999;
+  line-height: 1.6;
+}
+
 .menu-card {
   width: 222px;
   height: 131px;

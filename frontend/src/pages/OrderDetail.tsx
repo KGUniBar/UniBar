@@ -1,18 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import PaymentModal from '../components/PaymentModal'
 import './OrderDetail.css'
 
+interface Menu {
+  id: number
+  name: string
+  price: number
+}
+
 function OrderDetail() {
   const navigate = useNavigate()
   const { tableId } = useParams<{ tableId: string }>()
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [menuItems, setMenuItems] = useState<Menu[]>([])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
     navigate('/')
   }
+
+  // localStorage에서 메뉴 불러오기
+  useEffect(() => {
+    const loadMenus = () => {
+      const savedMenus = localStorage.getItem('menus')
+      if (savedMenus) {
+        setMenuItems(JSON.parse(savedMenus))
+      }
+    }
+    
+    loadMenus()
+    
+    // 메뉴가 변경될 때마다 업데이트
+    const handleStorageChange = () => {
+      loadMenus()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    // 같은 탭에서 변경된 경우를 위해 interval로 체크
+    const interval = setInterval(() => {
+      loadMenus()
+    }, 500)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   // 현재 날짜 포맷팅
   const getCurrentDate = () => {
@@ -24,16 +59,6 @@ function OrderDetail() {
     const weekday = weekdays[today.getDay()]
     return `${year}.${month}.${day} (${weekday})`
   }
-
-  // 예시 메뉴 데이터
-  const menuItems = [
-    { id: 1, name: '메뉴명', price: 10000 },
-    { id: 2, name: '메뉴명', price: 15000 },
-    { id: 3, name: '메뉴명', price: 12000 },
-    { id: 4, name: '메뉴명', price: 18000 },
-    { id: 5, name: '메뉴명', price: 20000 },
-    { id: 6, name: '메뉴명', price: 16000 },
-  ]
 
   const orderItems = [
     { id: 1, name: '메뉴명', quantity: 1 },
@@ -80,18 +105,25 @@ function OrderDetail() {
           <div className="order-detail-body">
             {/* 왼쪽: 메뉴 카드들 */}
             <div className="menu-cards-section">
-              <div className="menu-cards-grid">
-                {menuItems.map((menu) => (
-                  <div key={menu.id} className="menu-card">
-                    <div className="menu-card-header">
-                      <h3 className="menu-name">{menu.name}</h3>
+              {menuItems.length === 0 ? (
+                <div className="no-menu-message">
+                  등록된 메뉴가 없습니다.<br />
+                  Setting 페이지에서 메뉴를 등록해주세요.
+                </div>
+              ) : (
+                <div className="menu-cards-grid">
+                  {menuItems.map((menu) => (
+                    <div key={menu.id} className="menu-card">
+                      <div className="menu-card-header">
+                        <h3 className="menu-name">{menu.name}</h3>
+                      </div>
+                      <div className="menu-card-body">
+                        <div className="menu-price">{menu.price.toLocaleString()}원</div>
+                      </div>
                     </div>
-                    <div className="menu-card-body">
-                      <div className="menu-price">{menu.price.toLocaleString()}원</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 오른쪽: 주문 내역 및 주문하기 */}

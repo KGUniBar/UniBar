@@ -150,10 +150,200 @@
 
 /* 메뉴 섹션 */
 .menu-section {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.menu-register-button {
+  align-self: flex-end;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  background-color: #f7f2fe;
+  font-size: 20px;
+  font-weight: 700;
+  color: #9747ff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-register-button:hover {
+  background-color: #e8d5ff;
+}
+
+/* 메뉴 입력 폼 */
+.menu-input-form {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.menu-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.menu-input-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.menu-input {
+  width: 100%;
+  height: 62px;
+  padding: 0 20px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.menu-input:focus {
+  outline: none;
+  border-color: #9747ff;
+}
+
+.menu-input::placeholder {
+  color: #999;
+}
+
+/* 메뉴 테이블 */
+.menu-table-container {
+  width: 100%;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
-  min-height: 200px;
+  overflow: hidden;
+}
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.menu-table thead {
+  background-color: #e5e5e5;
+}
+
+.menu-table th {
+  padding: 15px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  border-bottom: 1px solid #828282;
+  border-right: 1px solid #828282;
+}
+
+.menu-table th:last-child {
+  border-right: none;
+}
+
+.menu-table td {
+  padding: 15px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  border-bottom: 1px solid #828282;
+  border-right: 1px solid #828282;
+  background-color: #ffffff;
+}
+
+.menu-table td:last-child {
+  border-right: none;
+}
+
+.menu-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.menu-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.empty-menu-message {
+  text-align: center;
+  color: #999;
+  padding: 40px !important;
+}
+
+.menu-action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.menu-action-btn {
+  padding: 8px 20px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-action-btn.delete {
+  border-color: #ff4747;
+  background-color: #ffffff;
+  color: #ff4747;
+}
+
+.menu-action-btn.delete:hover {
+  background-color: #fff5f5;
+}
+
+.menu-action-btn.edit {
+  border-color: #9747ff;
+  background-color: #ffffff;
+  color: #9747ff;
+}
+
+.menu-action-btn.edit:hover {
+  background-color: #f7f2fe;
+}
+
+/* 메뉴 수정 폼 */
+.menu-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.menu-edit-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-edit-label {
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.menu-edit-input {
+  width: 100%;
+  height: 62px;
+  padding: 0 20px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.menu-edit-input:focus {
+  outline: none;
+  border-color: #9747ff;
 }
 
 /* QR 코드 섹션 */

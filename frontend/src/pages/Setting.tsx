@@ -5,17 +5,40 @@ import './Setting.css'
 
 type SettingTab = 'table' | 'menu' | 'qrcode'
 
+interface Menu {
+  id: number
+  name: string
+  price: number
+}
+
 function Setting() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<SettingTab>('table')
   const [tableCount, setTableCount] = useState<number>(8)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  
+  // 메뉴 관리 상태
+  const [menus, setMenus] = useState<Menu[]>([])
+  const [menuName, setMenuName] = useState<string>('')
+  const [menuPrice, setMenuPrice] = useState<string>('')
+  const [editingMenuId, setEditingMenuId] = useState<number | null>(null)
+  const [isMenuEditModalOpen, setIsMenuEditModalOpen] = useState(false)
+  const [editMenuName, setEditMenuName] = useState<string>('')
+  const [editMenuPrice, setEditMenuPrice] = useState<string>('')
 
   // localStorage에서 테이블 수 불러오기
   useEffect(() => {
     const savedTableCount = localStorage.getItem('tableCount')
     if (savedTableCount) {
       setTableCount(parseInt(savedTableCount, 10))
+    }
+  }, [])
+
+  // localStorage에서 메뉴 불러오기
+  useEffect(() => {
+    const savedMenus = localStorage.getItem('menus')
+    if (savedMenus) {
+      setMenus(JSON.parse(savedMenus))
     }
   }, [])
 
@@ -57,6 +80,87 @@ function Setting() {
 
   const handleCancelSave = () => {
     setIsConfirmModalOpen(false)
+  }
+
+  // 메뉴 추가
+  const handleAddMenu = () => {
+    if (!menuName.trim() || !menuPrice.trim()) {
+      alert('메뉴명과 금액을 모두 입력해주세요.')
+      return
+    }
+
+    const price = parseInt(menuPrice.replace(/,/g, ''), 10)
+    if (isNaN(price) || price <= 0) {
+      alert('올바른 금액을 입력해주세요.')
+      return
+    }
+
+    const newMenu: Menu = {
+      id: Date.now(),
+      name: menuName.trim(),
+      price: price
+    }
+
+    const updatedMenus = [...menus, newMenu]
+    setMenus(updatedMenus)
+    localStorage.setItem('menus', JSON.stringify(updatedMenus))
+    
+    setMenuName('')
+    setMenuPrice('')
+  }
+
+  // 메뉴 수정 모달 열기
+  const handleOpenEditModal = (menu: Menu) => {
+    setEditingMenuId(menu.id)
+    setEditMenuName(menu.name)
+    setEditMenuPrice(menu.price.toLocaleString())
+    setIsMenuEditModalOpen(true)
+  }
+
+  // 메뉴 수정
+  const handleEditMenu = () => {
+    if (!editMenuName.trim() || !editMenuPrice.trim()) {
+      alert('메뉴명과 금액을 모두 입력해주세요.')
+      return
+    }
+
+    const price = parseInt(editMenuPrice.replace(/,/g, ''), 10)
+    if (isNaN(price) || price <= 0) {
+      alert('올바른 금액을 입력해주세요.')
+      return
+    }
+
+    if (editingMenuId === null) return
+
+    const updatedMenus = menus.map(menu =>
+      menu.id === editingMenuId
+        ? { ...menu, name: editMenuName.trim(), price: price }
+        : menu
+    )
+    setMenus(updatedMenus)
+    localStorage.setItem('menus', JSON.stringify(updatedMenus))
+    
+    setIsMenuEditModalOpen(false)
+    setEditingMenuId(null)
+    setEditMenuName('')
+    setEditMenuPrice('')
+  }
+
+  // 메뉴 삭제
+  const handleDeleteMenu = (menuId: number) => {
+    if (window.confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+      const updatedMenus = menus.filter(menu => menu.id !== menuId)
+      setMenus(updatedMenus)
+      localStorage.setItem('menus', JSON.stringify(updatedMenus))
+    }
+  }
+
+  // 금액 입력 포맷팅 (천단위 콤마)
+  const handlePriceChange = (value: string, setter: (value: string) => void) => {
+    const numericValue = value.replace(/,/g, '')
+    if (numericValue === '' || /^\d+$/.test(numericValue)) {
+      setter(numericValue === '' ? '' : parseInt(numericValue, 10).toLocaleString())
+    }
   }
 
   return (
@@ -122,10 +226,94 @@ function Setting() {
             </div>
           )}
 
-          {/* 메뉴 화면 (나중에 구현) */}
+          {/* 메뉴 화면 */}
           {activeTab === 'menu' && (
             <div className="menu-section">
-              <div>메뉴 관리 화면 (구현 예정)</div>
+              {/* 메뉴 등록 버튼 */}
+              <button className="menu-register-button" onClick={handleAddMenu}>
+                메뉴 등록
+              </button>
+
+              {/* 메뉴 입력 폼 */}
+              <div className="menu-input-form">
+                <div className="menu-input-group">
+                  <label className="menu-input-label">메뉴명</label>
+                  <input
+                    type="text"
+                    className="menu-input"
+                    placeholder="메뉴명을 입력하세요"
+                    value={menuName}
+                    onChange={(e) => setMenuName(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddMenu()
+                      }
+                    }}
+                  />
+                </div>
+                <div className="menu-input-group">
+                  <label className="menu-input-label">금액</label>
+                  <input
+                    type="text"
+                    className="menu-input"
+                    placeholder="금액을 입력하세요"
+                    value={menuPrice}
+                    onChange={(e) => handlePriceChange(e.target.value, setMenuPrice)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddMenu()
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 메뉴 목록 테이블 */}
+              <div className="menu-table-container">
+                <table className="menu-table">
+                  <thead>
+                    <tr>
+                      <th>NO</th>
+                      <th>메뉴명</th>
+                      <th>금액</th>
+                      <th>설정</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menus.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="empty-menu-message">
+                          등록된 메뉴가 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      menus.map((menu, index) => (
+                        <tr key={menu.id}>
+                          <td>{index + 1}</td>
+                          <td>{menu.name}</td>
+                          <td>{menu.price.toLocaleString()}원</td>
+                          <td>
+                            <div className="menu-action-buttons">
+                              <button
+                                className="menu-action-btn delete"
+                                onClick={() => handleDeleteMenu(menu.id)}
+                              >
+                                삭제
+                              </button>
+                              <button
+                                className="menu-action-btn edit"
+                                onClick={() => handleOpenEditModal(menu)}
+                              >
+                                수정
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -138,7 +326,7 @@ function Setting() {
         </div>
       </div>
 
-      {/* 확인 팝업 */}
+      {/* 테이블 수 확인 팝업 */}
       {isConfirmModalOpen && (
         <div className="confirm-modal-overlay" onClick={handleCancelSave}>
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -152,6 +340,46 @@ function Setting() {
               </button>
               <button className="confirm-button confirm" onClick={handleConfirmSave}>
                 확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 메뉴 수정 팝업 */}
+      {isMenuEditModalOpen && (
+        <div className="confirm-modal-overlay" onClick={() => setIsMenuEditModalOpen(false)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="confirm-modal-title">메뉴 수정하기</h2>
+            <div className="menu-edit-form">
+              <div className="menu-edit-input-group">
+                <label className="menu-edit-label">메뉴명</label>
+                <input
+                  type="text"
+                  className="menu-edit-input"
+                  value={editMenuName}
+                  onChange={(e) => setEditMenuName(e.target.value)}
+                />
+              </div>
+              <div className="menu-edit-input-group">
+                <label className="menu-edit-label">금액</label>
+                <input
+                  type="text"
+                  className="menu-edit-input"
+                  value={editMenuPrice}
+                  onChange={(e) => handlePriceChange(e.target.value, setEditMenuPrice)}
+                />
+              </div>
+            </div>
+            <div className="confirm-modal-buttons">
+              <button
+                className="confirm-button cancel"
+                onClick={() => setIsMenuEditModalOpen(false)}
+              >
+                취소
+              </button>
+              <button className="confirm-button confirm" onClick={handleEditMenu}>
+                수정
               </button>
             </div>
           </div>
