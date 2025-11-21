@@ -1,0 +1,151 @@
+.reservation-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-header {
+  height: 50px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.header-date {
+  font-size: 14px;
+}
+
+.header-greeting {
+  font-size: 14px;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.reservation-content {
+  padding: 40px;
+  flex: 1;
+}
+
+.reservation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.reservation-title {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.reservation-register-button {
+  width: 120px;
+  height: 40px;
+  background-color: #9747ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reservation-register-button:hover {
+  background-color: #8533e6;
+}
+
+.reservation-table-container {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reservation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reservation-table thead {
+  background-color: #f5f5f5;
+}
+
+.reservation-table th {
+  padding: 15px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.reservation-table td {
+  padding: 15px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 400;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.reservation-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reservation-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.empty-table-message {
+  text-align: center;
+  color: #999;
+  padding: 40px !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-button,
+.complete-button {
+  padding: 8px 16px;
+  border: 1px solid #9747ff;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #000000;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-button:hover,
+.complete-button:hover {
+  background-color: #f5f5f5;
+}
+
+.complete-button {
+  background-color: #9747ff;
+  color: #ffffff;
+  border: none;
+}
+
+.complete-button:hover {
+  background-color: #8533e6;
+}
+

@@ -1,0 +1,96 @@
+.order-list-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-header {
+  height: 50px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.header-date {
+  font-size: 14px;
+}
+
+.header-greeting {
+  font-size: 14px;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.order-list-content {
+  padding: 40px;
+  flex: 1;
+}
+
+.order-list-title {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+.table-card {
+  width: 284px;
+  height: 268px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 26px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.table-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-card-header {
+  margin-bottom: 20px;
+}
+
+.table-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.table-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menu-item-text {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.empty-table {
+  font-size: 16px;
+  color: #999;
+  font-style: italic;
+}
+

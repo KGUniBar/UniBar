@@ -1,0 +1,248 @@
+.dashboard-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* 사이드바 */
+.sidebar {
+  width: 191px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  height: 50px;
+  background-color: #d9d9d9;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.sidebar-header .logo {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.menu-item {
+  height: 50px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #e8e8e8;
+}
+
+.menu-item.active {
+  background-color: #f5f5f5;
+}
+
+.menu-spacer {
+  flex: 1;
+  background-color: #f5f5f5;
+}
+
+/* 메인 컨텐츠 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+/* 상단 헤더 */
+.top-header {
+  height: 50px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  gap: 20px;
+}
+
+.header-date {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.header-greeting {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: color 0.2s ease;
+}
+
+.logout-button:hover {
+  color: #9747ff;
+}
+
+/* 대시보드 컨텐츠 */
+.dashboard-content {
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.dashboard-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 30px;
+}
+
+/* 날짜 필터 */
+.period-filter {
+  display: flex;
+  gap: 8.5px;
+  margin-bottom: 34px;
+}
+
+.period-button {
+  width: 89px;
+  height: 46px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background-color: transparent;
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: all 0.2s ease;
+}
+
+.period-button.inactive {
+  background-color: transparent;
+  color: #000000;
+}
+
+.period-button.active {
+  background-color: #f7f2fe;
+  border: none;
+  color: #9747ff;
+  font-weight: 700;
+}
+
+.period-button:hover {
+  background-color: #f5f5f5;
+}
+
+.period-button.active:hover {
+  background-color: #f7f2fe;
+}
+
+/* 통계 카드 */
+.stats-cards {
+  display: flex;
+  gap: 26.5px;
+  margin-bottom: 34px;
+}
+
+.stat-card {
+  flex: 1;
+  height: 125px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 27px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.stat-value span:first-child {
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+}
+
+.stat-unit {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000000;
+}
+
+/* 차트 컨테이너 */
+.chart-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 26px;
+  height: 426px;
+}
+
+.chart-title {
+  font-size: 20px;
+  font-weight: 400;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.chart-placeholder {
+  width: 100%;
+  height: calc(100% - 44px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8f8f8f;
+  font-size: 16px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 150px;
+  }
+
+  .stats-cards {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    width: 100%;
+  }
+}
+
