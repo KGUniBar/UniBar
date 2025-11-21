@@ -5,7 +5,7 @@ import './Sidebar.css'
 function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [isHallOpen, setIsHallOpen] = useState(location.pathname === '/order' || location.pathname.startsWith('/order/'))
+  const [isHallOpen, setIsHallOpen] = useState(location.pathname === '/order' || location.pathname.startsWith('/order/') || location.pathname === '/reservation')
   const [isKitchenOpen, setIsKitchenOpen] = useState(false)
 
   const handleLogoClick = () => {
@@ -38,7 +38,12 @@ function Sidebar() {
           </div>
           {isHallOpen && (
             <div className="menu-children">
-              <div className="menu-item menu-child">예약</div>
+              <div 
+                className={`menu-item menu-child ${location.pathname === '/reservation' ? 'active' : ''}`}
+                onClick={() => navigate('/reservation')}
+              >
+                예약
+              </div>
               <div 
                 className={`menu-item menu-child ${isOrderPage ? 'active' : ''}`}
                 onClick={() => navigate('/order')}
