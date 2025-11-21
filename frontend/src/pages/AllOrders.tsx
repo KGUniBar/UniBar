@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import './AllOrders.css'
@@ -15,53 +15,42 @@ interface Order {
   tableName: string
   items: OrderItem[]
   orderTime: string
+  totalPrice?: number
 }
 
 function AllOrders() {
   const navigate = useNavigate()
+  const [orders, setOrders] = useState<Order[]>([])
 
-  // 모든 주문 내역 (테이블 번호와 관련없이)
-  const [orders] = useState<Order[]>([
-    { 
-      id: 1,
-      tableId: 1, 
-      tableName: '1번 테이블', 
-      items: [
-        { id: 1, name: '메뉴명', quantity: 1 },
-        { id: 2, name: '메뉴명', quantity: 1 },
-      ],
-      orderTime: '14:30'
-    },
-    { 
-      id: 2,
-      tableId: 3, 
-      tableName: '3번 테이블', 
-      items: [
-        { id: 3, name: '메뉴명', quantity: 2 },
-        { id: 4, name: '메뉴명', quantity: 1 },
-      ],
-      orderTime: '14:45'
-    },
-    { 
-      id: 3,
-      tableId: 4, 
-      tableName: '4번 테이블', 
-      items: [
-        { id: 5, name: '메뉴명', quantity: 1 },
-        { id: 6, name: '메뉴명', quantity: 3 },
-      ],
-      orderTime: '15:00'
-    },
-    { 
-      id: 4,
-      tableId: 2, 
-      tableName: '2번 테이블', 
-      items: [
-        { id: 7, name: '메뉴명', quantity: 1 },
-      ],
-      orderTime: '15:15'
-    },
-  ])
+  // localStorage에서 전체 주문 내역 불러오기
+  useEffect(() => {
+    const loadAllOrders = () => {
+      const savedOrders = localStorage.getItem('allOrders')
+      if (savedOrders) {
+        setOrders(JSON.parse(savedOrders))
+      } else {
+        setOrders([])
+      }
+    }
+    
+    loadAllOrders()
+    
+    // 주문 내역이 변경될 때마다 업데이트
+    const handleStorageChange = () => {
+      loadAllOrders()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    // 같은 탭에서 변경된 경우를 위해 interval로 체크
+    const interval = setInterval(() => {
+      loadAllOrders()
+    }, 500)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('token')

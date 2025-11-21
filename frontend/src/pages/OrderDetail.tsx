@@ -10,11 +10,20 @@ interface Menu {
   price: number
 }
 
+interface OrderItem {
+  menuId: number
+  name: string
+  quantity: number
+  price: number
+}
+
 function OrderDetail() {
   const navigate = useNavigate()
   const { tableId } = useParams<{ tableId: string }>()
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [isTableEndModalOpen, setIsTableEndModalOpen] = useState(false)
   const [menuItems, setMenuItems] = useState<Menu[]>([])
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -49,6 +58,31 @@ function OrderDetail() {
     }
   }, [])
 
+  // localStorage에서 테이블별 주문 내역 불러오기
+  useEffect(() => {
+    if (!tableId) return
+    
+    const loadTableOrders = () => {
+      const savedOrders = localStorage.getItem(`tableOrders_${tableId}`)
+      if (savedOrders) {
+        setOrderItems(JSON.parse(savedOrders))
+      } else {
+        setOrderItems([])
+      }
+    }
+    
+    loadTableOrders()
+    
+    // 주문 내역이 변경될 때마다 업데이트
+    const interval = setInterval(() => {
+      loadTableOrders()
+    }, 500)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [tableId])
+
   // 현재 날짜 포맷팅
   const getCurrentDate = () => {
     const today = new Date()
@@ -60,26 +94,125 @@ function OrderDetail() {
     return `${year}.${month}.${day} (${weekday})`
   }
 
-  const orderItems = [
-    { id: 1, name: '메뉴명', quantity: 1 },
-    { id: 2, name: '메뉴명', quantity: 1 },
-    { id: 3, name: '메뉴명', quantity: 1 },
-    { id: 4, name: '메뉴명', quantity: 1 },
-  ]
+  // 메뉴 클릭 핸들러 - 바로 주문 내역에 추가
+  const handleMenuClick = (menu: Menu) => {
+    const existingItem = orderItems.find(item => item.menuId === menu.id)
+    
+    let updatedItems: OrderItem[]
+    if (existingItem) {
+      // 이미 있는 메뉴면 수량만 증가
+      updatedItems = orderItems.map(item =>
+        item.menuId === menu.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    } else {
+      // 새로운 메뉴면 추가
+      updatedItems = [
+        ...orderItems,
+        {
+          menuId: menu.id,
+          name: menu.name,
+          quantity: 1,
+          price: menu.price
+        }
+      ]
+    }
+
+    setOrderItems(updatedItems)
+    if (tableId) {
+      localStorage.setItem(`tableOrders_${tableId}`, JSON.stringify(updatedItems))
+    }
+  }
+
+  // 주문 내역에서 수량 조절
+  const handleOrderItemQuantityChange = (menuId: number, delta: number) => {
+    const updatedItems = orderItems.map(item => {
+      if (item.menuId === menuId) {
+        const newQuantity = item.quantity + delta
+        if (newQuantity <= 0) {
+          return null // 삭제
+        }
+        return { ...item, quantity: newQuantity }
+      }
+      return item
+    }).filter((item): item is OrderItem => item !== null)
+
+    setOrderItems(updatedItems)
+    if (tableId) {
+      localStorage.setItem(`tableOrders_${tableId}`, JSON.stringify(updatedItems))
+    }
+  }
+
 
   const totalPrice = orderItems.reduce((sum, item) => {
-    const menuItem = menuItems.find(m => m.name === item.name)
-    return sum + (menuItem ? menuItem.price * item.quantity : 0)
+    return sum + item.price * item.quantity
   }, 0)
 
   const handleOrderClick = () => {
+    if (orderItems.length === 0) {
+      alert('주문할 메뉴를 선택해주세요.')
+      return
+    }
     setIsPaymentModalOpen(true)
   }
 
   const handlePaymentComplete = () => {
-    // 결제 완료 처리 (나중에 구현)
-    console.log('결제 완료')
+    if (!tableId) return
+
+    // 전체 주문 내역에 추가
+    const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]')
+    const now = new Date()
+    const orderTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    
+    const newOrder = {
+      id: Date.now(),
+      tableId: parseInt(tableId),
+      tableName: `${tableId}번 테이블`,
+      items: orderItems.map(item => ({
+        id: item.menuId,
+        name: item.name,
+        quantity: item.quantity
+      })),
+      orderTime: orderTime,
+      totalPrice: totalPrice
+    }
+    
+    allOrders.push(newOrder)
+    localStorage.setItem('allOrders', JSON.stringify(allOrders))
+
+    // 총 매출 업데이트
+    const currentTotalSales = parseInt(localStorage.getItem('totalSales') || '0')
+    localStorage.setItem('totalSales', (currentTotalSales + totalPrice).toString())
+
+    // 음식 주문 건수 업데이트
+    const currentOrderCount = parseInt(localStorage.getItem('totalOrderCount') || '0')
+    localStorage.setItem('totalOrderCount', (currentOrderCount + 1).toString())
+
+    // 테이블 주문 내역 초기화
+    setOrderItems([])
+    localStorage.removeItem(`tableOrders_${tableId}`)
+    
     setIsPaymentModalOpen(false)
+  }
+
+  // 테이블 종료 핸들러
+  const handleTableEndClick = () => {
+    setIsTableEndModalOpen(true)
+  }
+
+  const handleConfirmTableEnd = () => {
+    if (!tableId) return
+
+    // 테이블 주문 내역 초기화
+    setOrderItems([])
+    localStorage.removeItem(`tableOrders_${tableId}`)
+    
+    setIsTableEndModalOpen(false)
+  }
+
+  const handleCancelTableEnd = () => {
+    setIsTableEndModalOpen(false)
   }
 
   return (
@@ -113,7 +246,11 @@ function OrderDetail() {
               ) : (
                 <div className="menu-cards-grid">
                   {menuItems.map((menu) => (
-                    <div key={menu.id} className="menu-card">
+                    <div 
+                      key={menu.id} 
+                      className="menu-card"
+                      onClick={() => handleMenuClick(menu)}
+                    >
                       <div className="menu-card-header">
                         <h3 className="menu-name">{menu.name}</h3>
                       </div>
@@ -129,22 +266,36 @@ function OrderDetail() {
             {/* 오른쪽: 주문 내역 및 주문하기 */}
             <div className="order-summary-section">
               <div className="order-tabs">
-                <button className="order-tab">주문내역</button>
-                <button className="order-tab active">테이블 종료</button>
+                <button className="order-tab active">주문내역</button>
+                <button className="order-tab" onClick={handleTableEndClick}>테이블 종료</button>
               </div>
 
               <div className="order-list-box">
                 <div className="order-list">
-                  {orderItems.map((item) => (
-                    <div key={item.id} className="order-list-item">
-                      <span className="order-item-name">{item.name}</span>
-                      <div className="quantity-controls">
-                        <button className="quantity-btn">-</button>
-                        <span className="quantity-value">{item.quantity}</span>
-                        <button className="quantity-btn">+</button>
+                  {orderItems.length === 0 ? (
+                    <div className="empty-order-message">주문 내역이 없습니다.</div>
+                  ) : (
+                    orderItems.map((item) => (
+                      <div key={item.menuId} className="order-list-item">
+                        <span className="order-item-name">{item.name}</span>
+                        <div className="quantity-controls">
+                          <button 
+                            className="quantity-btn" 
+                            onClick={() => handleOrderItemQuantityChange(item.menuId, -1)}
+                          >
+                            -
+                          </button>
+                          <span className="quantity-value">{item.quantity}</span>
+                          <button 
+                            className="quantity-btn" 
+                            onClick={() => handleOrderItemQuantityChange(item.menuId, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -163,6 +314,27 @@ function OrderDetail() {
           onPaymentComplete={handlePaymentComplete}
           totalPrice={totalPrice}
         />
+      )}
+
+      {/* 테이블 종료 확인 팝업 */}
+      {isTableEndModalOpen && (
+        <div className="confirm-modal-overlay" onClick={handleCancelTableEnd}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="confirm-modal-title">테이블 종료</h2>
+            <p className="confirm-modal-message">
+              정말 {tableId}번 테이블을 종료하시겠습니까?<br />
+              주문 내역이 초기화됩니다.
+            </p>
+            <div className="confirm-modal-buttons">
+              <button className="confirm-button cancel" onClick={handleCancelTableEnd}>
+                취소
+              </button>
+              <button className="confirm-button confirm" onClick={handleConfirmTableEnd}>
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

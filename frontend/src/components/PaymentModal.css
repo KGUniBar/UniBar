@@ -12,12 +12,12 @@
 }
 
 .payment-modal {
-  width: 513px;
-  height: 475px;
   background-color: #ffffff;
   border: 1px solid #757575;
   border-radius: 8px;
-  padding: 40px;
+  padding: 30px;
+  min-width: 400px;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,6 +27,7 @@
 .payment-modal-title {
   font-size: 20px;
   font-weight: 400;
+  color: #000000;
   margin: 0;
   text-align: center;
 }
@@ -68,20 +69,22 @@
   display: flex;
   gap: 20px;
   width: 100%;
+  justify-content: flex-end;
 }
 
 .payment-button {
-  flex: 1;
-  height: 61px;
+  padding: 15px 30px;
+  border: none;
   border-radius: 10px;
   font-size: 20px;
+  font-weight: 400;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .payment-button.cancel {
+  background-color: #ffffff;
   border: 1px solid #9747ff;
-  background-color: transparent;
   color: #000000;
 }
 
@@ -90,12 +93,11 @@
 }
 
 .payment-button.complete {
-  border: none;
   background-color: #9747ff;
   color: #ffffff;
 }
 
 .payment-button.complete:hover {
-  background-color: #7a3acc;
+  background-color: #8533e6;
 }
 

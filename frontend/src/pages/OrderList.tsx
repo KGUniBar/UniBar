@@ -55,12 +55,47 @@ function OrderList() {
     return `${year}.${month}.${day} (${weekday})`
   }
 
+  const [tableOrders, setTableOrders] = useState<{[key: number]: any[]}>({})
+
+  // localStorage에서 테이블별 주문 내역 불러오기
+  useEffect(() => {
+    const loadTableOrders = () => {
+      const orders: {[key: number]: any[]} = {}
+      
+      for (let i = 1; i <= tableCount; i++) {
+        const savedOrders = localStorage.getItem(`tableOrders_${i}`)
+        if (savedOrders) {
+          orders[i] = JSON.parse(savedOrders)
+        } else {
+          orders[i] = []
+        }
+      }
+      
+      setTableOrders(orders)
+    }
+    
+    loadTableOrders()
+    
+    // 주문 내역이 변경될 때마다 업데이트
+    const interval = setInterval(() => {
+      loadTableOrders()
+    }, 500)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [tableCount])
+
   // 테이블 데이터 생성 (설정된 테이블 수만큼)
-  const tables = Array.from({ length: tableCount }, (_, index) => ({
-    id: index + 1,
-    name: `${index + 1}번 테이블`,
-    menus: [] // 초기에는 주문 없음
-  }))
+  const tables = Array.from({ length: tableCount }, (_, index) => {
+    const tableId = index + 1
+    const orders = tableOrders[tableId] || []
+    return {
+      id: tableId,
+      name: `${tableId}번 테이블`,
+      menus: orders.map((item: any) => `${item.name} x${item.quantity}`)
+    }
+  })
 
   const handleTableClick = (tableId: number) => {
     navigate(`/order/${tableId}`)

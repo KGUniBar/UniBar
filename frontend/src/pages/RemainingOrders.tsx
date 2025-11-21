@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import './RemainingOrders.css'
@@ -18,36 +18,54 @@ interface TableOrder {
 
 function RemainingOrders() {
   const navigate = useNavigate()
-  
-  // 홀 주문에서 주문한 내역을 바탕으로 구성 (예시 데이터)
-  const [tableOrders, setTableOrders] = useState<TableOrder[]>([
-    { 
-      tableId: 1, 
-      tableName: '1번 테이블', 
-      items: [
-        { id: 1, name: '메뉴명', quantity: 1 },
-        { id: 2, name: '메뉴명', quantity: 1 },
-        { id: 3, name: '메뉴명', quantity: 1 },
-      ]
-    },
-    { 
-      tableId: 3, 
-      tableName: '3번 테이블', 
-      items: [
-        { id: 4, name: '메뉴명', quantity: 1 },
-        { id: 5, name: '메뉴명', quantity: 1 },
-      ]
-    },
-    { 
-      tableId: 4, 
-      tableName: '4번 테이블', 
-      items: [
-        { id: 6, name: '메뉴명', quantity: 1 },
-        { id: 7, name: '메뉴명', quantity: 1 },
-        { id: 8, name: '메뉴명', quantity: 1 },
-      ]
-    },
-  ])
+  const [tableOrders, setTableOrders] = useState<TableOrder[]>([])
+  const [tableCount, setTableCount] = useState<number>(8)
+
+  // localStorage에서 테이블 수 불러오기
+  useEffect(() => {
+    const savedTableCount = localStorage.getItem('tableCount')
+    if (savedTableCount) {
+      setTableCount(parseInt(savedTableCount, 10))
+    }
+  }, [])
+
+  // localStorage에서 테이블별 주문 내역 불러오기
+  useEffect(() => {
+    const loadTableOrders = () => {
+      const orders: TableOrder[] = []
+      
+      for (let i = 1; i <= tableCount; i++) {
+        const savedOrders = localStorage.getItem(`tableOrders_${i}`)
+        if (savedOrders) {
+          const items = JSON.parse(savedOrders)
+          if (items.length > 0) {
+            orders.push({
+              tableId: i,
+              tableName: `${i}번 테이블`,
+              items: items.map((item: any) => ({
+                id: item.menuId,
+                name: item.name,
+                quantity: item.quantity
+              }))
+            })
+          }
+        }
+      }
+      
+      setTableOrders(orders)
+    }
+    
+    loadTableOrders()
+    
+    // 주문 내역이 변경될 때마다 업데이트
+    const interval = setInterval(() => {
+      loadTableOrders()
+    }, 500)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [tableCount])
 
   const handleLogout = () => {
     localStorage.removeItem('token')

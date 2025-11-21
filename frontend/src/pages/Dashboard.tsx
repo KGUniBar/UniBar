@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import './Dashboard.css'
@@ -6,6 +6,41 @@ import './Dashboard.css'
 function Dashboard() {
   const navigate = useNavigate()
   const [selectedPeriod, setSelectedPeriod] = useState<'yesterday' | 'today' | 'week'>('today')
+  const [totalSales, setTotalSales] = useState<number>(0)
+  const [totalOrderCount, setTotalOrderCount] = useState<number>(0)
+
+  // localStorage에서 총 매출과 주문 건수 불러오기
+  useEffect(() => {
+    const loadStats = () => {
+      const savedSales = localStorage.getItem('totalSales')
+      const savedOrderCount = localStorage.getItem('totalOrderCount')
+      
+      if (savedSales) {
+        setTotalSales(parseInt(savedSales, 10))
+      }
+      if (savedOrderCount) {
+        setTotalOrderCount(parseInt(savedOrderCount, 10))
+      }
+    }
+    
+    loadStats()
+    
+    // 통계가 변경될 때마다 업데이트
+    const handleStorageChange = () => {
+      loadStats()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    // 같은 탭에서 변경된 경우를 위해 interval로 체크
+    const interval = setInterval(() => {
+      loadStats()
+    }, 500)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -70,7 +105,7 @@ function Dashboard() {
             <div className="stat-card">
               <div className="stat-label">총 매출</div>
               <div className="stat-value">
-                <span>0,000,000</span>
+                <span>{totalSales.toLocaleString()}</span>
                 <span className="stat-unit">원</span>
               </div>
             </div>
@@ -84,7 +119,7 @@ function Dashboard() {
             <div className="stat-card">
               <div className="stat-label">음식 주문 건</div>
               <div className="stat-value">
-                <span>0,000</span>
+                <span>{totalOrderCount.toLocaleString()}</span>
                 <span className="stat-unit">건</span>
               </div>
             </div>
