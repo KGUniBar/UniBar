@@ -2,13 +2,13 @@ name: Order Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
     paths:
       - 'src/**'
       - 'build.gradle'
       - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'src/**'
       - 'build.gradle'
@@ -46,4 +46,3 @@ jobs:
       run: ./gradlew build
       env:
         SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/unibar-test
-
