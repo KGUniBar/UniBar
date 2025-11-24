@@ -2,7 +2,7 @@ name: Auth Feature Test
 
 on:
   push:
-    branches: [ "main", "develop", "auth_feature" ]
+    branches: [ "main", "develop", "login_feature" ]
   pull_request:
     branches: [ "main", "develop" ]
 
