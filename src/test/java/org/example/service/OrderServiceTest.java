@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.model.Order;
 import org.example.repository.OrderRepository;
+import org.example.util.SecurityUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +25,9 @@ class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private SecurityUtil securityUtil;
 
     @InjectMocks
     private OrderService orderService;
@@ -35,12 +40,14 @@ class OrderServiceTest {
         order.setTableId(1);
         order.setTableName("Table 1");
 
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         Order createdOrder = orderService.createOrder(order);
 
         // then
+        assertThat(createdOrder.getOwnerId()).isEqualTo("1");
         assertThat(createdOrder.getOrderId()).isNotNull();
         assertThat(createdOrder.isPaid()).isFalse();
         assertThat(createdOrder.isCompleted()).isFalse();
@@ -64,14 +71,15 @@ class OrderServiceTest {
         order2.setTableId(tableId);
         order2.setPaid(false);
 
-        when(orderRepository.findByTableIdAndIsPaidFalse(tableId)).thenReturn(Arrays.asList(order1, order2));
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
+        when(orderRepository.findByOwnerIdAndTableIdAndIsPaidFalse("1", tableId)).thenReturn(Arrays.asList(order1, order2));
 
         // when
         List<Order> orders = orderService.getOrdersByTableId(tableId);
 
         // then
         assertThat(orders).hasSize(2);
-        verify(orderRepository).findByTableIdAndIsPaidFalse(tableId);
+        verify(orderRepository).findByOwnerIdAndTableIdAndIsPaidFalse("1", tableId);
     }
 
     @Test
@@ -81,8 +89,10 @@ class OrderServiceTest {
         String mongoId = "test-mongo-id";
         Order order = new Order();
         order.setId(mongoId);
+        order.setOwnerId("1");
         order.setPaid(false);
 
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(orderRepository.findById(mongoId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -95,4 +105,3 @@ class OrderServiceTest {
         verify(orderRepository).save(order);
     }
 }
-
