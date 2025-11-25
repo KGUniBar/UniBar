@@ -20,28 +20,25 @@ function Login() {
     setIsLoading(true)
 
     try {
-      const loginData: LoginRequest = { userId, password }
-      // 테스트용: API 호출 없이 무조건 대시보드로 이동
-      // const response = await login(loginData)
+      const loginData: LoginRequest = { username: userId, password } // API에 맞게 키 변경 (username)
       
-      // 테스트용: 무조건 성공 처리
-      setTimeout(() => {
-        // localStorage.setItem('token', 'test-token')
-        navigate('/dashboard')
-        setIsLoading(false)
-      }, 500) // 로딩 효과를 위한 짧은 딜레이
-
-      // 실제 API 연동 시 아래 코드 사용:
-      /*
       const response = await login(loginData)
-      if (response.success && response.token) {
+      
+      if (response.token) {
         localStorage.setItem('token', response.token)
+        localStorage.setItem('userId', response.userId)
+        if (response.name) {
+            localStorage.setItem('userName', response.name)
+        }
         navigate('/dashboard')
+      } else {
+        throw new Error('토큰을 받아오지 못했습니다.')
       }
-      */
+
     } catch (err) {
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다.')
       console.error('로그인 오류:', err)
+    } finally {
       setIsLoading(false)
     }
   }
@@ -66,6 +63,7 @@ function Login() {
                 placeholder="아이디를 입력해주세요"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -80,6 +78,7 @@ function Login() {
                 placeholder="비밀번호를 입력해주세요"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -137,4 +136,3 @@ function Login() {
 }
 
 export default Login
-
