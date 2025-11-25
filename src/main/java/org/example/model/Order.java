@@ -19,6 +19,7 @@ public class Order {
     @Id
     private String id;              // MongoDB ID
     
+    private String ownerId;         // 점주 ID (데이터 격리용)
     private Long orderId;           // 프론트엔드용 타임스탬프 ID (명세서의 id)
     private Integer tableId;        // 테이블 번호
     private String tableName;       // 테이블명
