@@ -2,14 +2,14 @@ package org.example.service;
 
 import org.example.model.Menu;
 import org.example.repository.MenuRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +24,11 @@ class MenuServiceTest {
 
     @InjectMocks
     private MenuService menuService;
+
+    @AfterEach
+    void afterEach(TestInfo testInfo) {
+        System.out.println("통과: " + testInfo.getDisplayName());
+    }
 
     @Test
     @DisplayName("메뉴 등록 시 ownerId가 1로 설정되고 기본 값이 올바르게 세팅된다")
@@ -48,5 +53,4 @@ class MenuServiceTest {
         verify(menuRepository).save(any(Menu.class));
     }
 }
-
 

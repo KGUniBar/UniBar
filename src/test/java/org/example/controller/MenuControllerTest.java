@@ -3,8 +3,10 @@ package org.example.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.model.Menu;
 import org.example.service.MenuService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -28,6 +30,11 @@ class MenuControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @AfterEach
+    void afterEach(TestInfo testInfo) {
+        System.out.println("통과: " + testInfo.getDisplayName());
+    }
 
     @Test
     @DisplayName("메뉴 등록 API가 정상적으로 Menu를 반환한다")
@@ -56,5 +63,4 @@ class MenuControllerTest {
                 .andExpect(jsonPath("$.price").value(5000));
     }
 }
-
 
