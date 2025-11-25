@@ -1,124 +1,108 @@
-# 🔐 UniBar 인증 시스템 가이드
+# 🔐 인증 기능 명세서 (Authentication Specification)
 
-UniBar 프로젝트의 인증 시스템(로그인, 회원가입, 비밀번호 재설정)에 대한 문서입니다.
-본 시스템은 **Spring Security**와 **JWT(JSON Web Token)**를 기반으로 구현되었으며, **MongoDB**를 데이터 저장소로 사용합니다.
+## 1. 개요
+UniBar 서비스의 사용자 인증/인가를 담당하는 모듈입니다. JWT(JSON Web Token) 기반의 인증 방식을 사용하며, Spring Security를 통해 보안을 관리합니다.
 
----
+## 2. 주요 기능
+- **회원가입 (Signup)**: 새로운 사용자 계정 생성 (비밀번호 암호화 저장)
+- **로그인 (Login)**: 아이디/비밀번호 검증 및 JWT 토큰 발급
+- **비밀번호 재설정 (Reset Password)**: 아이디와 전화번호 검증 후 비밀번호 변경
+- **인증 필터 (Authentication Filter)**: 매 요청마다 헤더의 JWT 유효성 검사
 
-## 1. 주요 기능
+## 3. API 명세
 
-| 기능 | 설명 | 엔드포인트 | 권한 |
-|---|---|---|---|
-| **회원가입** | 새로운 사용자를 등록합니다. (비밀번호 암호화 저장) | `POST /api/auth/signup` | 누구나 |
-| **로그인** | 아이디/비밀번호로 인증하고 JWT 토큰을 발급받습니다. | `POST /api/auth/login` | 누구나 |
-| **비밀번호 재설정** | 기존 비밀번호 확인 후 새로운 비밀번호로 변경합니다. | `POST /api/auth/reset-password` | 누구나 |
+### 3.1 회원가입
+- **Endpoint**: `POST /api/auth/signup`
+- **Description**: 새로운 사용자를 등록합니다.
+- **Request Body**:
+  ```json
+  {
+    "username": "user123",
+    "password": "password123",
+    "confirmPassword": "password123",
+    "name": "홍길동",
+    "phoneNumber": "010-1234-5678"
+  }
+  ```
+- **Response**:
+  - `200 OK`: "회원가입 성공"
+  - `400 Bad Request`: "이미 존재하는 아이디입니다", "비밀번호가 일치하지 않습니다" 등
 
----
-
-## 2. API 명세 (API Specification)
-
-### 2.1 회원가입 (Signup)
-*   **URL**: `/api/auth/signup`
-*   **Method**: `POST`
-*   **Request Body**:
-    ```json
-    {
-      "username": "user123",
-      "password": "password123",
-      "name": "홍길동",
-      "phone": "010-1234-5678"
-    }
-    ```
-*   **Response**:
-    *   `200 OK`: "회원가입 성공"
-    *   `500 Error`: "이미 존재하는 아이디입니다." 등 에러 메시지
-
-### 2.2 로그인 (Login)
-*   **URL**: `/api/auth/login`
-*   **Method**: `POST`
-*   **Request Body**:
-    ```json
-    {
-      "username": "user123",
-      "password": "password123"
-    }
-    ```
-*   **Response**:
+### 3.2 로그인
+- **Endpoint**: `POST /api/auth/login`
+- **Description**: 사용자 인증 후 JWT 토큰을 발급합니다.
+- **Request Body**:
+  ```json
+  {
+    "username": "user123",
+    "password": "password123"
+  }
+  ```
+- **Response**:
+  - `200 OK`:
     ```json
     {
       "token": "eyJhbGciOiJIUzI1NiJ9...",
-      "userId": "65a1b2c3d4e5f6...",
+      "username": "user123",
       "name": "홍길동"
     }
     ```
+  - `401 Unauthorized`: "비밀번호가 일치하지 않습니다"
+  - `404 Not Found`: "존재하지 않는 사용자입니다"
 
-### 2.3 비밀번호 재설정 (Reset Password)
-*   **URL**: `/api/auth/reset-password`
-*   **Method**: `POST`
-*   **Request Body**:
-    ```json
-    {
-      "username": "user123",
-      "currentPassword": "password123",
-      "newPassword": "newPassword123"
-    }
-    ```
-*   **Response**:
-    *   `200 OK`: "비밀번호가 성공적으로 변경되었습니다."
-    *   `500 Error`: "현재 비밀번호가 일치하지 않습니다." 등 에러 메시지
+### 3.3 비밀번호 재설정
+- **Endpoint**: `POST /api/auth/reset-password`
+- **Description**: 사용자 정보를 확인하고 비밀번호를 재설정합니다.
+- **Request Body**:
+  ```json
+  {
+    "username": "user123",
+    "phoneNumber": "010-1234-5678",
+    "newPassword": "newPassword123",
+    "confirmNewPassword": "newPassword123"
+  }
+  ```
+- **Response**:
+  - `200 OK`: "비밀번호가 성공적으로 변경되었습니다."
+  - `400 Bad Request`: "사용자 정보가 일치하지 않습니다", "비밀번호가 일치하지 않습니다"
 
----
+## 4. 보안 설정 (Security Config)
 
-## 3. 실행 및 테스트 방법
+### 4.1 인증 방식
+- **Token Type**: Bearer Token
+- **Header**: `Authorization: Bearer <token>`
+- **Algorithm**: HMAC SHA-256
 
-### 3.1 Docker로 실행 (권장)
-백엔드, 프론트엔드, 데이터베이스를 한 번에 실행합니다.
-```bash
-docker-compose up --build -d
+### 4.2 접근 제어
+- **Permit All (누구나 접근 가능)**:
+  - `/api/auth/**` (로그인, 회원가입, 비밀번호 재설정)
+  - `/` (Health Check)
+  - `/error`
+- **Authenticated (인증 필요)**:
+  - 위 경로를 제외한 모든 API 요청 (`/api/orders/**` 등)
+
+### 4.3 CORS 설정
+프론트엔드(`http://localhost:5173`)와의 통신을 위해 CORS가 허용되어 있습니다.
+- **Allowed Origins**: `http://localhost:5173`
+- **Allowed Methods**: GET, POST, PUT, DELETE, OPTIONS
+- **Allowed Headers**: Authorization, Content-Type
+
+## 5. 데이터 모델 (User)
+MongoDB `users` 컬렉션에 저장됩니다.
+```java
+public class User {
+    @Id
+    private String id;          // MongoDB ObjectId
+    private String username;    // 아이디 (Unique)
+    private String password;    // 암호화된 비밀번호
+    private String name;        // 사용자 이름
+    private String phoneNumber; // 전화번호
+    private String role;        // 권한 (ROLE_USER)
+}
 ```
-*   **Frontend**: [http://localhost:5173](http://localhost:5173)
-*   **Backend**: [http://localhost:8080](http://localhost:8080)
 
-### 3.2 로컬 테스트 (수동 실행)
-1.  **MongoDB 실행**: 로컬에 MongoDB가 설치되어 있거나 Docker로 실행 중이어야 합니다.
-2.  **Backend 실행**:
-    ```bash
-    ./gradlew bootRun
-    ```
-3.  **Frontend 실행**:
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
-
----
-
-## 4. 데이터베이스 확인 방법 (MongoDB)
-
-회원 정보는 `unibar` 데이터베이스의 `users` 컬렉션에 저장됩니다.
-
-### 터미널에서 확인하기
-1.  실행 중인 MongoDB 컨테이너 접속:
-    ```bash
-    docker exec -it unibar-mongo mongosh unibar
-    ```
-2.  회원 데이터 조회:
-    ```javascript
-    db.users.find().pretty()
-    ```
-
-### GUI 툴(MongoDB Compass)로 확인하기
-*   **접속 주소**: `mongodb://localhost:27017`
-*   **Database**: `unibar`
-*   **Collection**: `users`
-
----
-
-## 5. 기술 스택
-*   **Language**: Java 17
-*   **Framework**: Spring Boot 3.2.3
-*   **Security**: Spring Security, JWT (io.jsonwebtoken 0.11.5)
-*   **Database**: MongoDB
-*   **Build Tool**: Gradle
-
+## 6. 테스트 (Testing)
+GitHub Actions를 통해 CI/CD 파이프라인에서 자동으로 테스트됩니다.
+- **Workflow**: `.github/workflows/auth-test.yml`
+- **Test Class**: `AuthServiceTest.java`, `AuthControllerTest.java`
+- **커버리지**: 정상 회원가입/로그인, 중복 아이디 예외, 비밀번호 불일치 예외 등 검증
