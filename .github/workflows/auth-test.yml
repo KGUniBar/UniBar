@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "develop", "login_feature" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "login_feature" ]
 
 jobs:
   test-auth:
