@@ -31,8 +31,10 @@ function AllOrders() {
       } else {
         setOrders([])
       }
+
     }
     
+
     loadAllOrders()
     
     // 주문 내역이 변경될 때마다 업데이트
@@ -132,4 +134,6 @@ function AllOrders() {
 }
 
 export default AllOrders
+
+
 
