@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
 import './ReservationEditModal.css'
-
-interface Reservation {
-  id: number
-  name: string
-  people: number
-  date: string
-}
+import { Reservation } from '../api/client'
 
 interface ReservationEditModalProps {
   isOpen: boolean
@@ -17,29 +11,26 @@ interface ReservationEditModalProps {
 
 function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: ReservationEditModalProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    people: '',
-    date: ''
+    tableNumber: '',
+    reservationTime: ''
   })
 
   useEffect(() => {
     if (isOpen && reservation) {
       setFormData({
-        name: reservation.name,
-        people: reservation.people.toString(),
-        date: reservation.date
+        tableNumber: reservation.tableNumber.toString(),
+        reservationTime: new Date(reservation.reservationTime).toISOString().substring(0, 16)
       })
     }
   }, [isOpen, reservation])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.name && formData.people && formData.date) {
+    if (formData.tableNumber && formData.reservationTime) {
       onUpdate({
         ...reservation,
-        name: formData.name,
-        people: parseInt(formData.people),
-        date: formData.date
+        tableNumber: parseInt(formData.tableNumber),
+        reservationTime: new Date(formData.reservationTime).toISOString()
       })
     }
   }
@@ -57,59 +48,41 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
         <h2 className="modal-title">예약 수정</h2>
         
         <form onSubmit={handleSubmit}>
-          {/* 예약자명 */}
           <div className="input-group">
-            <label htmlFor="edit-name">예약자명</label>
+            <label htmlFor="edit-tableNumber">테이블 번호</label>
             <div className="input-wrapper">
               <input
-                id="edit-name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          {/* 인원수 */}
-          <div className="input-group">
-            <label htmlFor="edit-people">인원수</label>
-            <div className="input-wrapper">
-              <input
-                id="edit-people"
-                name="people"
+                id="edit-tableNumber"
+                name="tableNumber"
                 type="number"
                 min="1"
-                value={formData.people}
+                value={formData.tableNumber}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
-          {/* 예약일 */}
           <div className="input-group">
-            <label htmlFor="edit-date">예약일</label>
+            <label htmlFor="edit-reservationTime">예약 시간</label>
             <div className="input-wrapper">
               <input
-                id="edit-date"
-                name="date"
-                type="date"
-                value={formData.date}
+                id="edit-reservationTime"
+                name="reservationTime"
+                type="datetime-local"
+                value={formData.reservationTime}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
-          {/* 버튼 */}
           <div className="modal-buttons">
             <button type="button" className="cancel-button" onClick={onClose}>
               취소
             </button>
             <button type="submit" className="submit-button">
-              등록
+              수정
             </button>
           </div>
         </form>
