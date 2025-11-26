@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { fetchMenus, createMenu as createMenuApi, updateMenu as updateMenuApi, deleteMenu as deleteMenuApi, type Menu as ApiMenu } from '../api/menuClient'
 import './Setting.css'
 
 type SettingTab = 'table' | 'menu' | 'qrcode'
 
 interface Menu {
-  id: number
+  id: string
   name: string
   price: number
 }
@@ -38,12 +39,25 @@ function Setting() {
     }
   }, [])
 
-  // localStorage에서 메뉴 불러오기
+  // 서버에서 메뉴 불러오기
   useEffect(() => {
-    const savedMenus = localStorage.getItem('menus')
-    if (savedMenus) {
-      setMenus(JSON.parse(savedMenus))
+    const loadMenus = async () => {
+      try {
+        const data: ApiMenu[] = await fetchMenus()
+        // API에서 받은 데이터를 프론트엔드에서 사용하는 형태로 매핑
+        const mapped: Menu[] = data.map(menu => ({
+          id: menu.id ?? String(menu.menuId ?? ''),
+          name: menu.name,
+          price: menu.price,
+        }))
+        setMenus(mapped)
+      } catch (error) {
+        console.error('메뉴 불러오기 실패:', error)
+        setMenus([])
+      }
     }
+
+    loadMenus()
   }, [])
 
   // localStorage에서 QR 코드 이미지 불러오기
@@ -94,8 +108,8 @@ function Setting() {
     setIsConfirmModalOpen(false)
   }
 
-  // 메뉴 추가
-  const handleAddMenu = () => {
+  // 메뉴 추가 (MongoDB 저장)
+  const handleAddMenu = async () => {
     if (!menuName.trim() || !menuPrice.trim()) {
       alert('메뉴명과 금액을 모두 입력해주세요.')
       return
@@ -107,18 +121,27 @@ function Setting() {
       return
     }
 
-    const newMenu: Menu = {
-      id: Date.now(),
-      name: menuName.trim(),
-      price: price
-    }
+    try {
+      const created = await createMenuApi({
+        name: menuName.trim(),
+        price: price,
+      })
 
-    const updatedMenus = [...menus, newMenu]
-    setMenus(updatedMenus)
-    localStorage.setItem('menus', JSON.stringify(updatedMenus))
-    
-    setMenuName('')
-    setMenuPrice('')
+      const newMenu: Menu = {
+        id: created.id ?? String(created.menuId ?? ''),
+        name: created.name,
+        price: created.price,
+      }
+
+      const updatedMenus = [...menus, newMenu]
+      setMenus(updatedMenus)
+      
+      setMenuName('')
+      setMenuPrice('')
+    } catch (error) {
+      console.error('메뉴 등록 실패:', error)
+      alert('메뉴 등록에 실패했습니다.')
+    }
   }
 
   // 메뉴 수정 모달 열기
@@ -129,8 +152,8 @@ function Setting() {
     setIsMenuEditModalOpen(true)
   }
 
-  // 메뉴 수정
-  const handleEditMenu = () => {
+  // 메뉴 수정 (MongoDB 반영)
+  const handleEditMenu = async () => {
     if (!editMenuName.trim() || !editMenuPrice.trim()) {
       alert('메뉴명과 금액을 모두 입력해주세요.')
       return
@@ -144,26 +167,42 @@ function Setting() {
 
     if (editingMenuId === null) return
 
-    const updatedMenus = menus.map(menu =>
-      menu.id === editingMenuId
-        ? { ...menu, name: editMenuName.trim(), price: price }
-        : menu
-    )
-    setMenus(updatedMenus)
-    localStorage.setItem('menus', JSON.stringify(updatedMenus))
-    
-    setIsMenuEditModalOpen(false)
-    setEditingMenuId(null)
-    setEditMenuName('')
-    setEditMenuPrice('')
+    try {
+      const updated = await updateMenuApi(editingMenuId, {
+        name: editMenuName.trim(),
+        price: price,
+      })
+
+      const updatedMenus = menus.map(menu =>
+        menu.id === editingMenuId
+          ? { ...menu, name: updated.name, price: updated.price }
+          : menu
+      )
+      setMenus(updatedMenus)
+      
+      setIsMenuEditModalOpen(false)
+      setEditingMenuId(null)
+      setEditMenuName('')
+      setEditMenuPrice('')
+    } catch (error) {
+      console.error('메뉴 수정 실패:', error)
+      alert('메뉴 수정에 실패했습니다.')
+    }
   }
 
-  // 메뉴 삭제
-  const handleDeleteMenu = (menuId: number) => {
-    if (window.confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+  // 메뉴 삭제 (MongoDB 반영)
+  const handleDeleteMenu = async (menuId: string) => {
+    if (!window.confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      await deleteMenuApi(menuId)
       const updatedMenus = menus.filter(menu => menu.id !== menuId)
       setMenus(updatedMenus)
-      localStorage.setItem('menus', JSON.stringify(updatedMenus))
+    } catch (error) {
+      console.error('메뉴 삭제 실패:', error)
+      alert('메뉴 삭제에 실패했습니다.')
     }
   }
 

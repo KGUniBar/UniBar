@@ -1,8 +1,22 @@
-// API 클라이언트 설정
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
+const jsonHeaders = { 'Content-Type': 'application/json' }
+
+const parseError = async (response: Response, defaultMessage: string) => {
+  const text = await response.text()
+  if (!text) {
+    throw new Error(defaultMessage)
+  }
+  try {
+    const json = JSON.parse(text)
+    throw new Error(json.message || defaultMessage)
+  } catch {
+    throw new Error(text || defaultMessage)
+  }
+}
+
 export interface LoginRequest {
-  username: string // userId -> username 변경
+  username: string
   password: string
 }
 
@@ -29,21 +43,12 @@ export interface PasswordResetRequest {
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: jsonHeaders,
     body: JSON.stringify(data),
   })
 
   if (!response.ok) {
-    // 에러 응답이 JSON인지 텍스트인지 확인
-    const text = await response.text();
-    try {
-        const json = JSON.parse(text);
-        throw new Error(json.message || '로그인에 실패했습니다.');
-    } catch (e) {
-        throw new Error(text || '로그인에 실패했습니다.');
-    }
+    await parseError(response, '로그인에 실패했습니다.')
   }
 
   return response.json()
@@ -53,20 +58,12 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const signup = async (data: SignupRequest): Promise<string> => {
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: jsonHeaders,
     body: JSON.stringify(data),
   })
 
   if (!response.ok) {
-    const text = await response.text();
-    try {
-        const json = JSON.parse(text);
-        throw new Error(json.message || '회원가입에 실패했습니다.');
-    } catch (e) {
-        throw new Error(text || '회원가입에 실패했습니다.');
-    }
+    await parseError(response, '회원가입에 실패했습니다.')
   }
 
   return response.text() // "회원가입 성공" 문자열 반환
@@ -76,20 +73,12 @@ export const signup = async (data: SignupRequest): Promise<string> => {
 export const resetPassword = async (data: PasswordResetRequest): Promise<string> => {
     const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: jsonHeaders,
       body: JSON.stringify(data),
     })
   
     if (!response.ok) {
-      const text = await response.text();
-      try {
-          const json = JSON.parse(text);
-          throw new Error(json.message || '비밀번호 재설정에 실패했습니다.');
-      } catch (e) {
-          throw new Error(text || '비밀번호 재설정에 실패했습니다.');
-      }
+      await parseError(response, '비밀번호 재설정에 실패했습니다.')
     }
   
     return response.text()
