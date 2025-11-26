@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { fetchQrCode, uploadQrCode } from '../api/qrCodeClient'
 import { fetchMenus, createMenu as createMenuApi, updateMenu as updateMenuApi, deleteMenu as deleteMenuApi, type Menu as ApiMenu } from '../api/menuClient'
 import './Setting.css'
 
@@ -60,12 +61,22 @@ function Setting() {
     loadMenus()
   }, [])
 
-  // localStorage에서 QR 코드 이미지 불러오기
+  // 서버에서 QR 코드 이미지 불러오기
   useEffect(() => {
-    const savedQrCode = localStorage.getItem('qrCodeImage')
-    if (savedQrCode) {
-      setQrCodeImage(savedQrCode)
+    const loadQrCode = async () => {
+      try {
+        const data = await fetchQrCode()
+        if (data) {
+          setQrCodeImage(data.imageData)
+        } else {
+          setQrCodeImage(null)
+        }
+      } catch (error) {
+        console.error('QR 코드 불러오기 실패:', error)
+      }
     }
+
+    loadQrCode()
   }, [])
 
   const handleLogout = () => {
@@ -215,7 +226,7 @@ function Setting() {
   }
 
   // QR 코드 이미지 업로드
-  const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQrCodeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -232,10 +243,15 @@ function Setting() {
     }
 
     const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64String = reader.result as string
-      setQrCodeImage(base64String)
-      localStorage.setItem('qrCodeImage', base64String)
+    reader.onloadend = async () => {
+      try {
+        const base64String = reader.result as string
+        const saved = await uploadQrCode(base64String)
+        setQrCodeImage(saved.imageData)
+      } catch (error) {
+        console.error('QR 코드 업로드 실패:', error)
+        alert('QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      }
     }
     reader.readAsDataURL(file)
   }
