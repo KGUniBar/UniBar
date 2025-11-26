@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.example.security.JwtAuthenticationFilter;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -27,6 +28,10 @@ class MenuControllerTest {
 
     @MockBean
     private MenuService menuService;
+
+    // SecurityConfig에서 주입되는 필터를 테스트 컨텍스트에서 Mock 으로 등록
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     private ObjectMapper objectMapper;
