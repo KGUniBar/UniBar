@@ -7,6 +7,12 @@ import ReservationCompleteModal from '../components/ReservationCompleteModal'
 import { getReservations, createReservation, updateReservation, deleteReservation, Reservation } from '../api/client'
 import './Reservation.css'
 
+interface User {
+  id: string
+  userId: string
+  name?: string
+}
+
 function ReservationPage() {
   const navigate = useNavigate()
   const [reservations, setReservations] = useState<Reservation[]>([])
@@ -14,28 +20,47 @@ function ReservationPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+
+  const handleError = (error: any) => {
+    const message = error.message || '오류가 발생했습니다. 다시 시도해주세요.'
+    console.error(error)
+    setError(message)
+    alert(message)
+  }
 
   const fetchReservations = async () => {
     try {
       const data = await getReservations()
       setReservations(data)
     } catch (error) {
-      console.error(error)
-      // TODO: 사용자에게 오류 메시지 표시
+      handleError(error)
     }
   }
 
   useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/')
+      return
+    }
+
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
     fetchReservations()
-  }, [])
+  }, [navigate])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     navigate('/')
   }
 
   const getCurrentDate = () => {
-    const today = new new Date()
+    const today = new Date()
     const year = today.getFullYear()
     const month = String(today.getMonth() + 1).padStart(2, '0')
     const day = String(today.getDate()).padStart(2, '0')
@@ -44,13 +69,13 @@ function ReservationPage() {
     return `${year}.${month}.${day} (${weekday})`
   }
 
-  const handleCreateReservation = async (reservation: Omit<Reservation, 'id' | 'status'>) => {
+  const handleCreateReservation = async (reservation: Omit<Reservation, 'id' | 'reservationId' | 'createdAt' | 'status'>) => {
     try {
-      await createReservation({ ...reservation, status: 'PENDING' })
+      await createReservation(reservation)
       fetchReservations()
       setIsCreateModalOpen(false)
     } catch (error) {
-      console.error(error)
+      handleError(error)
     }
   }
 
@@ -60,13 +85,14 @@ function ReservationPage() {
   }
 
   const handleEditReservation = async (updatedReservation: Reservation) => {
+    if (!updatedReservation.id) return
     try {
       await updateReservation(updatedReservation.id, updatedReservation)
       fetchReservations()
       setIsEditModalOpen(false)
       setSelectedReservation(null)
     } catch (error) {
-      console.error(error)
+      handleError(error)
     }
   }
 
@@ -76,32 +102,31 @@ function ReservationPage() {
   }
 
   const handleCompleteConfirm = async () => {
-    if (selectedReservation) {
+    if (selectedReservation && selectedReservation.id) {
       try {
-        await updateReservation(selectedReservation.id, { ...selectedReservation, status: 'COMPLETED' })
+        await updateReservation(selectedReservation.id, { ...selectedReservation, status: 'completed' })
         fetchReservations()
         setIsCompleteModalOpen(false)
         setSelectedReservation(null)
       } catch (error) {
-        console.error(error)
+        handleError(error)
       }
     }
   }
 
-  const handleDeleteClick = async (id: number) => {
+  const handleDeleteClick = async (id: string) => {
     if (window.confirm('정말로 이 예약을 삭제하시겠습니까?')) {
       try {
         await deleteReservation(id)
         fetchReservations()
       } catch (error) {
-        console.error(error)
+        handleError(error)
       }
     }
   }
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
+  const formatDate = (date: Date) => {
+    if (!date) return ''
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
   }
 
@@ -111,7 +136,7 @@ function ReservationPage() {
       <div className="main-content">
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">000님 안녕하세요 :)</div>
+          <div className="header-greeting">{user?.name || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>
@@ -120,7 +145,7 @@ function ReservationPage() {
         <div className="reservation-content">
           <div className="reservation-header">
             <h1 className="reservation-title">홀 예약</h1>
-            <button 
+            <button
               className="reservation-register-button"
               onClick={() => setIsCreateModalOpen(true)}
             >
@@ -132,8 +157,10 @@ function ReservationPage() {
             <table className="reservation-table">
               <thead>
                 <tr>
-                  <th>테이블 번호</th>
+                  <th>고객명</th>
+                  <th>연락처</th>
                   <th>예약 시간</th>
+                  <th>인원</th>
                   <th>상태</th>
                   <th>작업</th>
                 </tr>
@@ -141,15 +168,17 @@ function ReservationPage() {
               <tbody>
                 {reservations.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="empty-table-message">
+                    <td colSpan={6} className="empty-table-message">
                       등록된 예약이 없습니다.
                     </td>
                   </tr>
                 ) : (
                   reservations.map((reservation) => (
                     <tr key={reservation.id}>
-                      <td>{reservation.tableNumber}</td>
+                      <td>{reservation.customerName}</td>
+                      <td>{reservation.phoneNumber}</td>
                       <td>{formatDate(reservation.reservationTime)}</td>
+                      <td>{reservation.numberOfGuests}</td>
                       <td>{reservation.status}</td>
                       <td>
                         <div className="action-buttons">
@@ -167,7 +196,7 @@ function ReservationPage() {
                           </button>
                           <button
                             className="delete-button"
-                            onClick={() => handleDeleteClick(reservation.id)}
+                            onClick={() => handleDeleteClick(reservation.id!)}
                           >
                             삭제
                           </button>

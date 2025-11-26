@@ -1,27 +1,31 @@
 import { useState } from 'react'
 import './ReservationCreateModal.css'
-import { Reservation } from '../api/client'
+import { Reservation } from '../api/reservation'
 
 interface ReservationCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  onRegister: (reservation: Omit<Reservation, 'id' | 'status'>) => void
+  onRegister: (reservation: Omit<Reservation, 'id' | 'reservationId' | 'createdAt' | 'status'>) => void
 }
 
 function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCreateModalProps) {
   const [formData, setFormData] = useState({
-    tableNumber: '',
+    customerName: '',
+    phoneNumber: '',
+    numberOfGuests: '',
     reservationTime: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.tableNumber && formData.reservationTime) {
+    if (formData.customerName && formData.phoneNumber && formData.numberOfGuests && formData.reservationTime) {
       onRegister({
-        tableNumber: parseInt(formData.tableNumber),
-        reservationTime: new Date(formData.reservationTime).toISOString()
+        customerName: formData.customerName,
+        phoneNumber: formData.phoneNumber,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        reservationTime: new Date(formData.reservationTime)
       })
-      setFormData({ tableNumber: '', reservationTime: '' })
+      setFormData({ customerName: '', phoneNumber: '', numberOfGuests: '', reservationTime: '' })
     }
   }
 
@@ -39,14 +43,42 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
-            <label htmlFor="tableNumber">테이블 번호</label>
+            <label htmlFor="customerName">고객명</label>
             <div className="input-wrapper">
               <input
-                id="tableNumber"
-                name="tableNumber"
+                id="customerName"
+                name="customerName"
+                type="text"
+                value={formData.customerName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="phoneNumber">연락처</label>
+            <div className="input-wrapper">
+              <input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="text"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="numberOfGuests">인원</label>
+            <div className="input-wrapper">
+              <input
+                id="numberOfGuests"
+                name="numberOfGuests"
                 type="number"
                 min="1"
-                value={formData.tableNumber}
+                value={formData.numberOfGuests}
                 onChange={handleChange}
                 required
               />

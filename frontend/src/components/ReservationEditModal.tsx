@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './ReservationEditModal.css'
-import { Reservation } from '../api/client'
+import { Reservation } from '../api/reservation'
 
 interface ReservationEditModalProps {
   isOpen: boolean
@@ -11,26 +11,32 @@ interface ReservationEditModalProps {
 
 function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: ReservationEditModalProps) {
   const [formData, setFormData] = useState({
-    tableNumber: '',
+    customerName: '',
+    phoneNumber: '',
+    numberOfGuests: '',
     reservationTime: ''
   })
 
   useEffect(() => {
     if (isOpen && reservation) {
       setFormData({
-        tableNumber: reservation.tableNumber.toString(),
-        reservationTime: new Date(reservation.reservationTime).toISOString().substring(0, 16)
+        customerName: reservation.customerName,
+        phoneNumber: reservation.phoneNumber,
+        numberOfGuests: reservation.numberOfGuests.toString(),
+        reservationTime: reservation.reservationTime.toISOString().substring(0, 16)
       })
     }
   }, [isOpen, reservation])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.tableNumber && formData.reservationTime) {
+    if (formData.customerName && formData.phoneNumber && formData.numberOfGuests && formData.reservationTime) {
       onUpdate({
         ...reservation,
-        tableNumber: parseInt(formData.tableNumber),
-        reservationTime: new Date(formData.reservationTime).toISOString()
+        customerName: formData.customerName,
+        phoneNumber: formData.phoneNumber,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        reservationTime: new Date(formData.reservationTime)
       })
     }
   }
@@ -49,14 +55,42 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
-            <label htmlFor="edit-tableNumber">테이블 번호</label>
+            <label htmlFor="edit-customerName">고객명</label>
             <div className="input-wrapper">
               <input
-                id="edit-tableNumber"
-                name="tableNumber"
+                id="edit-customerName"
+                name="customerName"
+                type="text"
+                value={formData.customerName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="edit-phoneNumber">연락처</label>
+            <div className="input-wrapper">
+              <input
+                id="edit-phoneNumber"
+                name="phoneNumber"
+                type="text"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="edit-numberOfGuests">인원</label>
+            <div className="input-wrapper">
+              <input
+                id="edit-numberOfGuests"
+                name="numberOfGuests"
                 type="number"
                 min="1"
-                value={formData.tableNumber}
+                value={formData.numberOfGuests}
                 onChange={handleChange}
                 required
               />
@@ -92,4 +126,5 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
 }
 
 export default ReservationEditModal
+
 
