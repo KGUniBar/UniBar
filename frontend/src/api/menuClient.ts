@@ -7,14 +7,22 @@ export interface Menu {
   price: number
 }
 
-const defaultHeaders = {
-  'Content-Type': 'application/json',
+const defaultHeaders = () => {
+  const token = localStorage.getItem('token')
+  return token
+    ? {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+    : {
+        'Content-Type': 'application/json',
+      }
 }
 
 export const fetchMenus = async (): Promise<Menu[]> => {
   const response = await fetch(`${API_BASE_URL}/menus`, {
     method: 'GET',
-    headers: defaultHeaders,
+    headers: defaultHeaders(),
   })
 
   if (!response.ok) {
@@ -27,7 +35,7 @@ export const fetchMenus = async (): Promise<Menu[]> => {
 export const createMenu = async (menu: Omit<Menu, 'id' | 'menuId'>): Promise<Menu> => {
   const response = await fetch(`${API_BASE_URL}/menus`, {
     method: 'POST',
-    headers: defaultHeaders,
+    headers: defaultHeaders(),
     body: JSON.stringify(menu),
   })
 
@@ -41,7 +49,7 @@ export const createMenu = async (menu: Omit<Menu, 'id' | 'menuId'>): Promise<Men
 export const updateMenu = async (id: string, menu: Omit<Menu, 'id' | 'menuId'>): Promise<Menu> => {
   const response = await fetch(`${API_BASE_URL}/menus/${id}`, {
     method: 'PUT',
-    headers: defaultHeaders,
+    headers: defaultHeaders(),
     body: JSON.stringify(menu),
   })
 
@@ -55,7 +63,7 @@ export const updateMenu = async (id: string, menu: Omit<Menu, 'id' | 'menuId'>):
 export const deleteMenu = async (id: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/menus/${id}`, {
     method: 'DELETE',
-    headers: defaultHeaders,
+    headers: defaultHeaders(),
   })
 
   if (!response.ok) {

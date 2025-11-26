@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.model.Menu;
 import org.example.repository.MenuRepository;
+import org.example.util.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,9 @@ class MenuServiceTest {
     @Mock
     private MenuRepository menuRepository;
 
+    @Mock
+    private SecurityUtil securityUtil;
+
     @InjectMocks
     private MenuService menuService;
 
@@ -38,6 +42,8 @@ class MenuServiceTest {
         request.setName("생맥주");
         request.setPrice(5000);
 
+        // 현재 로그인한 사용자 ID 를 1로 가정
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(menuRepository.save(any(Menu.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
