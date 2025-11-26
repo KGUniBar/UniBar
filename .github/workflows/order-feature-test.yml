@@ -2,9 +2,9 @@ name: Order Feature Test
 
 on:
   push:
-    branches: [ "order_feature" ]
+    branches: [ "main", "develop", "order_feature" ]
   pull_request:
-    branches: [ "main", "order_feature" ]
+    branches: [ "main", "develop", "order_feature" ]
 
 jobs:
   test-order-feature:
