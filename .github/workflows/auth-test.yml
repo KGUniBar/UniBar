@@ -1,0 +1,41 @@
+name: Auth Feature Test
+
+on:
+  push:
+    branches: [ "main", "develop", "login_feature" ]
+  pull_request:
+    branches: [ "main", "develop", "login_feature" ]
+
+jobs:
+  test-auth:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Run Tests
+      run: ./gradlew test
+      env:
+        SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/unibar-test
+
