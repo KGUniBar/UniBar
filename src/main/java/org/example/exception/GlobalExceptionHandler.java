@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -44,6 +46,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("접근 권한이 없습니다.");
+    }
+
+    @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
+    public ResponseEntity<String> handleValidationException(Exception ex) {
+        String message = "잘못된 요청입니다.";
+
+        if (ex instanceof MethodArgumentNotValidException manve && manve.getBindingResult().hasErrors()) {
+            message = manve.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        } else if (ex instanceof BindException be && be.getBindingResult().hasErrors()) {
+            message = be.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
     @ExceptionHandler(Exception.class)

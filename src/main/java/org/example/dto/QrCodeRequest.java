@@ -1,7 +1,6 @@
 package org.example.dto;
 
 public class QrCodeRequest {
-
     private String imageData;
 
     public QrCodeRequest() {

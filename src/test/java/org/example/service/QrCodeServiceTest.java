@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.model.QrCode;
 import org.example.repository.QrCodeRepository;
+import org.example.util.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,9 @@ class QrCodeServiceTest {
     @Mock
     private QrCodeRepository qrCodeRepository;
 
+    @Mock
+    private SecurityUtil securityUtil;
+
     @InjectMocks
     private QrCodeService qrCodeService;
 
@@ -39,6 +43,7 @@ class QrCodeServiceTest {
         // given
         String imageData = "data:image/png;base64,abc";
 
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc("1"))
                 .thenReturn(Optional.empty());
         when(qrCodeRepository.save(any(QrCode.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -58,6 +63,7 @@ class QrCodeServiceTest {
     @DisplayName("저장된 QR 코드가 없으면 null을 반환한다")
     void getLatestQrCode_returnsNullWhenNotExists() {
         // given
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc("1"))
                 .thenReturn(Optional.empty());
 
@@ -78,6 +84,7 @@ class QrCodeServiceTest {
         qrCode.setImageData("img");
         qrCode.setCreatedAt(LocalDateTime.now());
 
+        when(securityUtil.getCurrentUserId()).thenReturn("1");
         when(qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc("1"))
                 .thenReturn(Optional.of(qrCode));
 
