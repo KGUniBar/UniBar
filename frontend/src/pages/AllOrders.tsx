@@ -78,7 +78,7 @@ function AllOrders() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
+          <div className="header-greeting">000님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>

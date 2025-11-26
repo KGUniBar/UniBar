@@ -2,27 +2,19 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
 export interface LoginRequest {
-  username: string // userId -> username 변경
+  userId: string
   password: string
-}
-
-export interface SignupRequest {
-  username: string
-  password: string
-  name: string
-  phone: string
 }
 
 export interface LoginResponse {
-  token: string
-  userId: string
-  name: string
-}
-
-export interface PasswordResetRequest {
-    username: string
-    currentPassword: string
-    newPassword: string
+  success: boolean
+  message?: string
+  token?: string
+  user?: {
+    id: string
+    userId: string
+    name?: string
+  }
 }
 
 // 로그인 API
@@ -36,68 +28,25 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   })
 
   if (!response.ok) {
-    // 에러 응답이 JSON인지 텍스트인지 확인
-    const text = await response.text();
-    try {
-        const json = JSON.parse(text);
-        throw new Error(json.message || '로그인에 실패했습니다.');
-    } catch (e) {
-        throw new Error(text || '로그인에 실패했습니다.');
-    }
+    const error = await response.json().catch(() => ({ message: '로그인에 실패했습니다.' }))
+    throw new Error(error.message || '로그인에 실패했습니다.')
   }
 
   return response.json()
 }
 
-// 회원가입 API
-export const signup = async (data: SignupRequest): Promise<string> => {
-  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  if (!response.ok) {
-    const text = await response.text();
-    try {
-        const json = JSON.parse(text);
-        throw new Error(json.message || '회원가입에 실패했습니다.');
-    } catch (e) {
-        throw new Error(text || '회원가입에 실패했습니다.');
-    }
-  }
-
-  return response.text() // "회원가입 성공" 문자열 반환
-}
-
-// 비밀번호 재설정 API
-export const resetPassword = async (data: PasswordResetRequest): Promise<string> => {
-    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+// 로그아웃 API (필요시)
+export const logout = async (): Promise<void> => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
     })
-  
-    if (!response.ok) {
-      const text = await response.text();
-      try {
-          const json = JSON.parse(text);
-          throw new Error(json.message || '비밀번호 재설정에 실패했습니다.');
-      } catch (e) {
-          throw new Error(text || '비밀번호 재설정에 실패했습니다.');
-      }
-    }
-  
-    return response.text()
+    localStorage.removeItem('token')
+  }
 }
 
-// 로그아웃 API
-export const logout = async (): Promise<void> => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('userId')
-  localStorage.removeItem('userName')
-}
