@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import PaymentModal from '../components/PaymentModal'
+import { fetchMenus, type Menu as ApiMenu } from '../api/menuClient'
+import { createOrder, payOrder } from '../api/orderClient'
 import './OrderDetail.css'
 
 interface Menu {
@@ -30,32 +32,26 @@ function OrderDetail() {
     navigate('/')
   }
 
-  // localStorage에서 메뉴 불러오기
+  // 서버에서 메뉴 불러오기
   useEffect(() => {
-    const loadMenus = () => {
-      const savedMenus = localStorage.getItem('menus')
-      if (savedMenus) {
-        setMenuItems(JSON.parse(savedMenus))
+    const loadMenus = async () => {
+      try {
+        const data: ApiMenu[] = await fetchMenus()
+        const mapped: Menu[] = data
+          .filter(menu => menu.menuId != null)
+          .map(menu => ({
+            id: menu.menuId as number,
+            name: menu.name,
+            price: menu.price,
+          }))
+        setMenuItems(mapped)
+      } catch (error) {
+        console.error('메뉴 불러오기 실패:', error)
+        setMenuItems([])
       }
     }
-    
+
     loadMenus()
-    
-    // 메뉴가 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadMenus()
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
-    const interval = setInterval(() => {
-      loadMenus()
-    }, 500)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
-    }
   }, [])
 
   // localStorage에서 테이블별 주문 내역 불러오기
@@ -150,6 +146,8 @@ function OrderDetail() {
   }, 0)
 
   const handleOrderClick = () => {
+    if (!tableId) return
+
     if (orderItems.length === 0) {
       alert('주문할 메뉴를 선택해주세요.')
       return
@@ -157,50 +155,44 @@ function OrderDetail() {
     setIsPaymentModalOpen(true)
   }
 
-  const handlePaymentComplete = () => {
+  const handlePaymentComplete = async () => {
     if (!tableId) return
 
-    // 전체 주문 내역에 추가
-    const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]')
-    const now = new Date()
-    const orderTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    const orderDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-    
-    const newOrder = {
-      id: Date.now(),
-      tableId: parseInt(tableId),
-      tableName: `${tableId}번 테이블`,
-      items: orderItems.map(item => ({
-        id: item.menuId,
-        name: item.name,
-        quantity: item.quantity
-      })),
-      orderTime: orderTime,
-      orderDate: orderDate,
-      totalPrice: totalPrice
+    try {
+      const now = new Date()
+      const orderTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      const orderDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+      const orderData = {
+        tableId: parseInt(tableId, 10),
+        tableName: `${tableId}번 테이블`,
+        items: orderItems.map(item => ({
+          id: item.menuId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        orderTime,
+        orderDate,
+        totalPrice,
+      }
+
+      // 1) 백엔드에 주문 생성 + 결제 처리
+      const createdOrder = await createOrder(orderData)
+      if (createdOrder.id) {
+        await payOrder(createdOrder.id)
+      }
+
+      // 2) 테이블 주문 내역 초기화 (새로운 주문을 받을 수 있도록)
+      setOrderItems([])
+      localStorage.removeItem(`tableOrders_${tableId}`)
+
+      setIsPaymentModalOpen(false)
+      alert('결제가 완료되었습니다.')
+    } catch (error) {
+      console.error('주문 처리 실패:', error)
+      alert(error instanceof Error ? error.message : '주문 처리에 실패했습니다.')
     }
-    
-    allOrders.push(newOrder)
-    localStorage.setItem('allOrders', JSON.stringify(allOrders))
-
-    // 총 매출 업데이트
-    const currentTotalSales = parseInt(localStorage.getItem('totalSales') || '0')
-    localStorage.setItem('totalSales', (currentTotalSales + totalPrice).toString())
-
-    // 음식 주문 건수 업데이트
-    const currentOrderCount = parseInt(localStorage.getItem('totalOrderCount') || '0')
-    localStorage.setItem('totalOrderCount', (currentOrderCount + 1).toString())
-
-    // 결제 완료된 주문을 테이블별로 저장 (테이블 종료 전까지 홀 주문 페이지에 표시하기 위해)
-    const tableCompletedOrders = JSON.parse(localStorage.getItem(`tableCompletedOrders_${tableId}`) || '[]')
-    tableCompletedOrders.push(newOrder)
-    localStorage.setItem(`tableCompletedOrders_${tableId}`, JSON.stringify(tableCompletedOrders))
-
-    // 테이블 주문 내역 초기화 (새로운 주문을 받을 수 있도록)
-    setOrderItems([])
-    localStorage.removeItem(`tableOrders_${tableId}`)
-    
-    setIsPaymentModalOpen(false)
   }
 
   // 테이블 종료 핸들러
@@ -214,9 +206,7 @@ function OrderDetail() {
     // 테이블 주문 내역 초기화
     setOrderItems([])
     localStorage.removeItem(`tableOrders_${tableId}`)
-    // 결제 완료된 주문 내역도 초기화
-    localStorage.removeItem(`tableCompletedOrders_${tableId}`)
-    
+
     setIsTableEndModalOpen(false)
   }
 

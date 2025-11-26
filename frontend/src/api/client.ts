@@ -1,8 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
-const jsonHeaders = { 'Content-Type': 'application/json' }
+export const jsonHeaders = { 'Content-Type': 'application/json' }
 
-const parseError = async (response: Response, defaultMessage: string) => {
+export const parseError = async (response: Response, defaultMessage: string) => {
   const text = await response.text()
   if (!text) {
     throw new Error(defaultMessage)

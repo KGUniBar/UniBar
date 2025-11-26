@@ -33,10 +33,22 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
+    // 미완료(조리중) 주문 조회
+    @GetMapping("/remaining")
+    public ResponseEntity<List<Order>> getRemainingOrders() {
+        return ResponseEntity.ok(orderService.getRemainingOrders());
+    }
+
     // 결제 처리 (상태 변경)
     @PostMapping("/{id}/pay")
     public ResponseEntity<Order> payOrder(@PathVariable String id) {
         return ResponseEntity.ok(orderService.payOrder(id));
+    }
+
+    // 조리 완료 처리
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Order> completeOrder(@PathVariable String id) {
+        return ResponseEntity.ok(orderService.completeOrder(id));
     }
 }
 

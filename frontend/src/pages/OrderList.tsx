@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { getRemainingOrders, type Order } from '../api/orderClient'
 import './OrderList.css'
 
 function OrderList() {
@@ -25,7 +26,6 @@ function OrderList() {
     }
 
     window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
     const interval = setInterval(() => {
       const savedTableCount = localStorage.getItem('tableCount')
       if (savedTableCount && parseInt(savedTableCount, 10) !== tableCount) {
@@ -55,62 +55,46 @@ function OrderList() {
     return `${year}.${month}.${day} (${weekday})`
   }
 
-  const [tableOrders, setTableOrders] = useState<{[key: number]: any[]}>({})
+  const [ordersByTable, setOrdersByTable] = useState<{ [key: number]: { name: string; quantity: number }[] }>({})
 
-  // localStorage에서 테이블별 주문 내역 불러오기
+  // DB에서 테이블별 잔여 주문(결제 완료 + 조리 미완료) 불러오기
   useEffect(() => {
-    const loadTableOrders = () => {
-      const orders: {[key: number]: any[]} = {}
-      
-      for (let i = 1; i <= tableCount; i++) {
-        const allTableOrders: any[] = []
-        
-        // 아직 결제되지 않은 주문 내역
-        const savedOrders = localStorage.getItem(`tableOrders_${i}`)
-        if (savedOrders) {
-          try {
-            const pendingOrders = JSON.parse(savedOrders)
-            allTableOrders.push(...pendingOrders)
-          } catch (e) {
-            // 에러 처리
+    const loadTableOrders = async () => {
+      try {
+        const remainingOrders = await getRemainingOrders()
+        const grouped: { [key: number]: { name: string; quantity: number }[] } = {}
+
+        remainingOrders.forEach((order: Order) => {
+          if (order.tableId == null) return
+          const tableId = order.tableId
+          if (!grouped[tableId]) {
+            grouped[tableId] = []
           }
-        }
-        
-        // 결제 완료된 주문 내역 (테이블 종료 전까지)
-        const completedOrders = localStorage.getItem(`tableCompletedOrders_${i}`)
-        if (completedOrders) {
-          try {
-            const completed = JSON.parse(completedOrders)
-            // 각 결제 완료된 주문의 items를 추가
-            completed.forEach((order: any) => {
-              allTableOrders.push(...order.items)
-            })
-          } catch (e) {
-            // 에러 처리
-          }
-        }
-        
-        orders[i] = allTableOrders
+
+          order.items.forEach((item) => {
+            const existing = grouped[tableId].find((m) => m.name === item.name)
+            if (existing) {
+              existing.quantity += item.quantity
+            } else {
+              grouped[tableId].push({ name: item.name, quantity: item.quantity })
+            }
+          })
+        })
+
+        setOrdersByTable(grouped)
+      } catch (error) {
+        console.error('테이블별 잔여 주문 불러오기 실패:', error)
+        setOrdersByTable({})
       }
-      
-      setTableOrders(orders)
-    }
-    
-    loadTableOrders()
-    
-    // 주문 내역이 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadTableOrders()
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
+    loadTableOrders()
+
     const interval = setInterval(() => {
       loadTableOrders()
-    }, 300)
+    }, 3000)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
       clearInterval(interval)
     }
   }, [tableCount])
@@ -118,25 +102,14 @@ function OrderList() {
   // 테이블 데이터 생성 (설정된 테이블 수만큼)
   const tables = Array.from({ length: tableCount }, (_, index) => {
     const tableId = index + 1
-    const orders = tableOrders[tableId] || []
-    
-    // 같은 메뉴가 여러 번 주문된 경우 합치기
-    const menuMap: {[key: string]: number} = {}
-    orders.forEach((item: any) => {
-      const menuName = item.name
-      if (menuMap[menuName]) {
-        menuMap[menuName] += item.quantity
-      } else {
-        menuMap[menuName] = item.quantity
-      }
-    })
-    
-    const menus = Object.entries(menuMap).map(([name, quantity]) => `${name} x${quantity}`)
-    
+    const items = ordersByTable[tableId] || []
+
+    const menus = items.map((item) => `${item.name} x${item.quantity}`)
+
     return {
       id: tableId,
       name: `${tableId}번 테이블`,
-      menus: menus
+      menus,
     }
   })
 
@@ -167,11 +140,7 @@ function OrderList() {
           {/* 테이블 그리드 */}
           <div className="tables-grid">
             {tables.map((table) => (
-              <div
-                key={table.id}
-                className="table-card"
-                onClick={() => handleTableClick(table.id)}
-              >
+              <div key={table.id} className="table-card" onClick={() => handleTableClick(table.id)}>
                 <div className="table-card-header">
                   <h3 className="table-name">{table.name}</h3>
                 </div>

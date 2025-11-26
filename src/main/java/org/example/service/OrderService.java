@@ -25,13 +25,11 @@ public class OrderService {
         String currentUserId = securityUtil.getCurrentUserId();
         order.setOwnerId(currentUserId);
 
-        // 명세서에 따른 기본값 설정
         order.setOrderId(System.currentTimeMillis()); // 타임스탬프 ID
         order.setPaid(false);
         order.setCompleted(false);
         order.setCreatedAt(LocalDateTime.now());
 
-        // 날짜/시간 자동 설정 (프론트에서 안 보냈을 경우)
         if (order.getOrderDate() == null) {
             order.setOrderDate(LocalDate.now().toString());
         }
@@ -59,6 +57,26 @@ public class OrderService {
         }
 
         order.setPaid(true);
+        return orderRepository.save(order);
+    }
+
+    // 미완료(조리중) 주문 조회 (결제 완료 + 조리 미완료)
+    public List<Order> getRemainingOrders() {
+        String currentUserId = securityUtil.getCurrentUserId();
+        return orderRepository.findByOwnerIdAndIsCompletedFalseAndIsPaidTrue(currentUserId);
+    }
+
+    // 조리 완료 처리
+    public Order completeOrder(String id) {
+        String currentUserId = securityUtil.getCurrentUserId();
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("주문을 찾을 수 없습니다."));
+
+        if (!order.getOwnerId().equals(currentUserId)) {
+            throw new UnauthorizedException("이 주문에 대한 권한이 없습니다.");
+        }
+
+        order.setCompleted(true);
         return orderRepository.save(order);
     }
 
