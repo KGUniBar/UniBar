@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.model.QrCode;
 import org.example.repository.QrCodeRepository;
+import org.example.util.SecurityUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -9,19 +10,21 @@ import java.time.LocalDateTime;
 @Service
 public class QrCodeService {
 
-    private static final String FIXED_OWNER_ID = "1";
-
     private final QrCodeRepository qrCodeRepository;
+    private final SecurityUtil securityUtil;
 
-    public QrCodeService(QrCodeRepository qrCodeRepository) {
+    public QrCodeService(QrCodeRepository qrCodeRepository, SecurityUtil securityUtil) {
         this.qrCodeRepository = qrCodeRepository;
+        this.securityUtil = securityUtil;
     }
 
     public QrCode saveQrCode(String imageData) {
-        QrCode qrCode = qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc(FIXED_OWNER_ID)
+        String ownerId = securityUtil.getCurrentUserId();
+
+        QrCode qrCode = qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc(ownerId)
                 .orElse(new QrCode());
 
-        qrCode.setOwnerId(FIXED_OWNER_ID);
+        qrCode.setOwnerId(ownerId);
         qrCode.setImageData(imageData);
         qrCode.setCreatedAt(LocalDateTime.now());
 
@@ -29,7 +32,8 @@ public class QrCodeService {
     }
 
     public QrCode getLatestQrCode() {
-        return qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc(FIXED_OWNER_ID)
+        String ownerId = securityUtil.getCurrentUserId();
+        return qrCodeRepository.findTopByOwnerIdOrderByCreatedAtDesc(ownerId)
                 .orElse(null);
     }
 }
