@@ -1,0 +1,46 @@
+name: Order Feature Test
+
+on:
+  push:
+    branches: [ "main", "develop", "order_feature" ]
+  pull_request:
+    branches: [ "main", "develop", "order_feature" ]
+
+jobs:
+  test-order-feature:
+    runs-on: ubuntu-latest
+    
+    # MongoDB 서비스 컨테이너 설정 (테스트 시 DB 연결 필요)
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 전체 테스트를 실행하거나, 주문 관련 테스트만 필터링해서 실행할 수 있습니다.
+    # 현재는 주문 관련 테스트 파일이 없으므로 전체 테스트(test)를 실행하도록 설정했습니다.
+    # 추후 *Order*Test.java 파일들이 생기면 아래 주석을 해제하여 특정 테스트만 빠르게 돌릴 수 있습니다.
+    - name: Run Order Tests
+      run: ./gradlew test
+      # run: ./gradlew test --tests "*Order*" 
+      env:
+        SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/unibar-test
+
