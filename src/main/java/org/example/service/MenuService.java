@@ -1,6 +1,7 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.exception.ResourceNotFoundException;
 import org.example.model.Menu;
 import org.example.repository.MenuRepository;
 import org.example.util.SecurityUtil;
@@ -35,7 +36,7 @@ public class MenuService {
         String ownerId = securityUtil.getCurrentUserId();
 
         Menu menu = menuRepository.findByIdAndOwnerId(id, ownerId)
-                .orElseThrow(() -> new RuntimeException("Menu not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("메뉴를 찾을 수 없습니다."));
         menu.setName(updated.getName());
         menu.setPrice(updated.getPrice());
         return menuRepository.save(menu);
@@ -45,7 +46,7 @@ public class MenuService {
         String ownerId = securityUtil.getCurrentUserId();
 
         Menu menu = menuRepository.findByIdAndOwnerId(id, ownerId)
-                .orElseThrow(() -> new RuntimeException("Menu not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("메뉴를 찾을 수 없습니다."));
         menuRepository.delete(menu);
     }
 }

@@ -1,6 +1,8 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.exception.ResourceNotFoundException;
+import org.example.exception.UnauthorizedException;
 import org.example.model.Order;
 import org.example.repository.OrderRepository;
 import org.example.util.SecurityUtil;
@@ -22,13 +24,13 @@ public class OrderService {
     public Order createOrder(Order order) {
         String currentUserId = securityUtil.getCurrentUserId();
         order.setOwnerId(currentUserId);
-        
+
         // 명세서에 따른 기본값 설정
         order.setOrderId(System.currentTimeMillis()); // 타임스탬프 ID
         order.setPaid(false);
         order.setCompleted(false);
         order.setCreatedAt(LocalDateTime.now());
-        
+
         // 날짜/시간 자동 설정 (프론트에서 안 보냈을 경우)
         if (order.getOrderDate() == null) {
             order.setOrderDate(LocalDate.now().toString());
@@ -36,7 +38,7 @@ public class OrderService {
         if (order.getOrderTime() == null) {
             order.setOrderTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
         }
-        
+
         return orderRepository.save(order);
     }
 
@@ -50,16 +52,16 @@ public class OrderService {
     public Order payOrder(String id) {
         String currentUserId = securityUtil.getCurrentUserId();
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        
+                .orElseThrow(() -> new ResourceNotFoundException("주문을 찾을 수 없습니다."));
+
         if (!order.getOwnerId().equals(currentUserId)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new UnauthorizedException("이 주문에 대한 권한이 없습니다.");
         }
 
         order.setPaid(true);
         return orderRepository.save(order);
     }
-    
+
     // 전체 주문 조회
     public List<Order> getAllOrders() {
         String currentUserId = securityUtil.getCurrentUserId();

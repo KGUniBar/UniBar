@@ -2,6 +2,8 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthDto;
+import org.example.exception.ConflictException;
+import org.example.exception.UnauthorizedException;
 import org.example.model.User;
 import org.example.repository.UserRepository;
 import org.example.security.JwtTokenProvider;
@@ -20,7 +22,7 @@ public class AuthService {
     @Transactional
     public void signup(AuthDto.SignupRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("이미 존재하는 아이디입니다.");
+            throw new ConflictException("이미 존재하는 아이디입니다.");
         }
 
         User user = User.builder()
@@ -36,24 +38,24 @@ public class AuthService {
 
     public AuthDto.LoginResponse login(AuthDto.LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UnauthorizedException("아이디 또는 비밀번호가 일치하지 않습니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+            throw new UnauthorizedException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
 
         String token = jwtTokenProvider.createToken(user.getUsername(), user.getId());
-        
+
         return new AuthDto.LoginResponse(token, user.getId(), user.getName());
     }
 
     @Transactional
     public void resetPassword(AuthDto.PasswordResetRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UnauthorizedException("아이디 또는 비밀번호가 일치하지 않습니다."));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+            throw new UnauthorizedException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
