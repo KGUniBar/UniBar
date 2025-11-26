@@ -1,5 +1,5 @@
 // API 클라이언트 설정
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
 export interface LoginRequest {
   userId: string
@@ -50,4 +50,3 @@ export const logout = async (): Promise<void> => {
   }
 }
 
-export * from './reservation'

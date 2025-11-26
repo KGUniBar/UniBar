@@ -1,27 +1,29 @@
 import { useState } from 'react'
 import './ReservationCreateModal.css'
-import { Reservation } from '../api/client'
 
 interface ReservationCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  onRegister: (reservation: Omit<Reservation, 'id' | 'status'>) => void
+  onRegister: (reservation: { name: string; people: number; date: string }) => void
 }
 
 function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCreateModalProps) {
   const [formData, setFormData] = useState({
-    tableNumber: '',
-    reservationTime: ''
+    name: '',
+    people: '',
+    date: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.tableNumber && formData.reservationTime) {
+    if (formData.name && formData.people && formData.date) {
       onRegister({
-        tableNumber: parseInt(formData.tableNumber),
-        reservationTime: new Date(formData.reservationTime).toISOString()
+        name: formData.name,
+        people: parseInt(formData.people),
+        date: formData.date
       })
-      setFormData({ tableNumber: '', reservationTime: '' })
+      // 폼 초기화
+      setFormData({ name: '', people: '', date: '' })
     }
   }
 
@@ -38,35 +40,53 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
         <h2 className="modal-title">예약 등록</h2>
         
         <form onSubmit={handleSubmit}>
+          {/* 예약자명 */}
           <div className="input-group">
-            <label htmlFor="tableNumber">테이블 번호</label>
+            <label htmlFor="name">예약자명</label>
             <div className="input-wrapper">
               <input
-                id="tableNumber"
-                name="tableNumber"
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          {/* 인원수 */}
+          <div className="input-group">
+            <label htmlFor="people">인원수</label>
+            <div className="input-wrapper">
+              <input
+                id="people"
+                name="people"
                 type="number"
                 min="1"
-                value={formData.tableNumber}
+                value={formData.people}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
+          {/* 예약일 */}
           <div className="input-group">
-            <label htmlFor="reservationTime">예약 시간</label>
+            <label htmlFor="date">예약일</label>
             <div className="input-wrapper">
               <input
-                id="reservationTime"
-                name="reservationTime"
-                type="datetime-local"
-                value={formData.reservationTime}
+                id="date"
+                name="date"
+                type="date"
+                value={formData.date}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
+          {/* 버튼 */}
           <div className="modal-buttons">
             <button type="button" className="cancel-button" onClick={onClose}>
               취소
