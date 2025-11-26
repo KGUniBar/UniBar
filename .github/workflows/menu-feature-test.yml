@@ -2,12 +2,12 @@ name: Menu Feature Test
 
 on:
   push:
-    branches: [ "menu_feature", "main" ]
+    branches: [ "main", "develop", "menu_feature" ]
   pull_request:
-    branches: [ "main", "menu_feature" ]
+    branches: [ "main", "develop", "menu_feature" ]
 
 jobs:
-  test-menu-feature:
+  test-menu:
     runs-on: ubuntu-latest
 
     services:

@@ -1,7 +1,9 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.config.SecurityConfig;
 import org.example.model.Menu;
+import org.example.security.JwtAuthenticationFilter;
 import org.example.service.MenuService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,17 +12,24 @@ import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.example.security.JwtAuthenticationFilter;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(MenuController.class)
+@WebMvcTest(controllers = MenuController.class,
+        excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class)
+        })
 class MenuControllerTest {
 
     @Autowired
@@ -28,10 +37,6 @@ class MenuControllerTest {
 
     @MockBean
     private MenuService menuService;
-
-    // SecurityConfig에서 주입되는 필터를 테스트 컨텍스트에서 Mock 으로 등록
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -42,6 +47,7 @@ class MenuControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("메뉴 등록 API가 정상적으로 Menu를 반환한다")
     void createMenuApiTest() throws Exception {
         // given
@@ -60,6 +66,7 @@ class MenuControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/menus")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -68,4 +75,3 @@ class MenuControllerTest {
                 .andExpect(jsonPath("$.price").value(5000));
     }
 }
-
