@@ -8,7 +8,7 @@ on:
 
 
 jobs:
-  test:
+  qr_feature_test:
     runs-on: ubuntu-latest
 
     steps:

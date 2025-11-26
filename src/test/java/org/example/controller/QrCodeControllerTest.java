@@ -1,8 +1,10 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.config.SecurityConfig;
 import org.example.dto.QrCodeRequest;
 import org.example.model.QrCode;
+import org.example.security.JwtAuthenticationFilter;
 import org.example.service.QrCodeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +13,10 @@ import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -19,12 +24,17 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(QrCodeController.class)
+@WebMvcTest(controllers = QrCodeController.class,
+        excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class)
+        })
 class QrCodeControllerTest {
 
     @Autowired
@@ -42,6 +52,7 @@ class QrCodeControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("QR 코드가 없으면 204 No Content를 반환한다")
     void getQrCode_noContent() throws Exception {
         // given
@@ -53,6 +64,7 @@ class QrCodeControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("QR 코드가 있으면 200 OK와 함께 데이터를 반환한다")
     void getQrCode_ok() throws Exception {
         // given
@@ -73,6 +85,7 @@ class QrCodeControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("유효한 QR 코드 이미지 데이터로 업로드하면 200 OK와 함께 저장된 데이터를 반환한다")
     void uploadQrCode_ok() throws Exception {
         // given
@@ -88,6 +101,7 @@ class QrCodeControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/qrcode")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -97,6 +111,7 @@ class QrCodeControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("imageData가 비어 있으면 400 Bad Request를 반환한다")
     void uploadQrCode_badRequest() throws Exception {
         // given
@@ -104,6 +119,7 @@ class QrCodeControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/qrcode")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
