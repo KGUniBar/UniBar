@@ -42,6 +42,7 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
         <h2 className="modal-title">예약 등록</h2>
         
         <form onSubmit={handleSubmit}>
+          {/* 예약자명 */}
           <div className="input-group">
             <label htmlFor="customerName">고객명</label>
             <div className="input-wrapper">
@@ -85,13 +86,14 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
             </div>
           </div>
 
+          {/* 예약일 */}
           <div className="input-group">
-            <label htmlFor="reservationTime">예약 시간</label>
+            <label htmlFor="date">예약일</label>
             <div className="input-wrapper">
               <input
-                id="reservationTime"
-                name="reservationTime"
-                type="datetime-local"
+                id="date"
+                name="date"
+                type="date"
                 value={formData.reservationTime}
                 onChange={handleChange}
                 required
@@ -99,6 +101,7 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
             </div>
           </div>
 
+          {/* 버튼 */}
           <div className="modal-buttons">
             <button type="button" className="cancel-button" onClick={onClose}>
               취소
@@ -114,4 +117,3 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
 }
 
 export default ReservationCreateModal
-

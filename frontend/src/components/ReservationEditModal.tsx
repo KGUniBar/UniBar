@@ -54,6 +54,7 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
         <h2 className="modal-title">예약 수정</h2>
         
         <form onSubmit={handleSubmit}>
+          {/* 예약자명 */}
           <div className="input-group">
             <label htmlFor="edit-customerName">고객명</label>
             <div className="input-wrapper">
@@ -97,13 +98,14 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
             </div>
           </div>
 
+          {/* 예약일 */}
           <div className="input-group">
-            <label htmlFor="edit-reservationTime">예약 시간</label>
+            <label htmlFor="edit-date">예약일</label>
             <div className="input-wrapper">
               <input
-                id="edit-reservationTime"
-                name="reservationTime"
-                type="datetime-local"
+                id="edit-date"
+                name="date"
+                type="date"
                 value={formData.reservationTime}
                 onChange={handleChange}
                 required
@@ -111,12 +113,13 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
             </div>
           </div>
 
+          {/* 버튼 */}
           <div className="modal-buttons">
             <button type="button" className="cancel-button" onClick={onClose}>
               취소
             </button>
             <button type="submit" className="submit-button">
-              수정
+              등록
             </button>
           </div>
         </form>
@@ -126,5 +129,3 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
 }
 
 export default ReservationEditModal
-
-

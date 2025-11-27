@@ -4,8 +4,14 @@ import Sidebar from '../components/Sidebar'
 import ReservationCreateModal from '../components/ReservationCreateModal'
 import ReservationEditModal from '../components/ReservationEditModal'
 import ReservationCompleteModal from '../components/ReservationCompleteModal'
-import { getReservations, createReservation, updateReservation, deleteReservation, Reservation } from '../api/client'
 import './Reservation.css'
+import {
+  Reservation,
+  getReservations,
+  createReservation,
+  updateReservation,
+  deleteReservation,
+} from '../api/reservation'
 
 interface User {
   id: string
@@ -59,6 +65,7 @@ function ReservationPage() {
     navigate('/')
   }
 
+  // 현재 날짜 포맷팅
   const getCurrentDate = () => {
     const today = new Date()
     const year = today.getFullYear()
@@ -136,8 +143,12 @@ function ReservationPage() {
 
   return (
     <div className="reservation-container">
+      {/* 좌측 사이드바 */}
       <Sidebar />
+
+      {/* 메인 컨텐츠 */}
       <div className="main-content">
+        {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
           <div className="header-greeting">{user?.name || '000'}님 안녕하세요 :)</div>
@@ -146,6 +157,7 @@ function ReservationPage() {
           </button>
         </div>
 
+        {/* 예약 목록 컨텐츠 */}
         <div className="reservation-content">
           <div className="reservation-header">
             <h1 className="reservation-title">홀 예약</h1>
@@ -157,6 +169,7 @@ function ReservationPage() {
             </button>
           </div>
 
+          {/* 예약 목록 테이블 */}
           <div className="reservation-table-container">
             <table className="reservation-table">
               <thead>
@@ -215,12 +228,14 @@ function ReservationPage() {
         </div>
       </div>
 
+      {/* 예약 등록 모달 */}
       <ReservationCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onRegister={handleCreateReservation}
       />
 
+      {/* 예약 수정 모달 */}
       {selectedReservation && (
         <ReservationEditModal
           isOpen={isEditModalOpen}
@@ -233,6 +248,7 @@ function ReservationPage() {
         />
       )}
 
+      {/* 완료 확인 모달 */}
       <ReservationCompleteModal
         isOpen={isCompleteModalOpen}
         onClose={() => {
