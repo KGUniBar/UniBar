@@ -26,8 +26,8 @@ function Login() {
       
       // 테스트용: 무조건 성공 처리
       setTimeout(() => {
-        // localStorage.setItem('token', 'test-token')
-        navigate('/dashboard')
+        localStorage.setItem('token', 'test-token')
+        navigate('/reservation')
         setIsLoading(false)
       }, 500) // 로딩 효과를 위한 짧은 딜레이
 

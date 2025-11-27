@@ -130,6 +130,10 @@ function ReservationPage() {
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
   }
 
+  const activeReservations = reservations.filter(
+    (reservation) => reservation.status !== 'completed'
+  );
+
   return (
     <div className="reservation-container">
       <Sidebar />
@@ -166,14 +170,14 @@ function ReservationPage() {
                 </tr>
               </thead>
               <tbody>
-                {reservations.length === 0 ? (
+                {activeReservations.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="empty-table-message">
                       등록된 예약이 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  reservations.map((reservation) => (
+                  activeReservations.map((reservation) => (
                     <tr key={reservation.id}>
                       <td>{reservation.customerName}</td>
                       <td>{reservation.phoneNumber}</td>

@@ -14,25 +14,26 @@ import java.util.List;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final String ownerId = "dummy-owner"; // 임시 ownerId
 
     @GetMapping
     public ResponseEntity<List<Reservation>> getReservations() {
-        return ResponseEntity.ok(reservationService.getReservations());
+        return ResponseEntity.ok(reservationService.getReservations(ownerId));
     }
 
     @PostMapping
     public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservation) {
-        return ResponseEntity.ok(reservationService.createReservation(reservation));
+        return ResponseEntity.ok(reservationService.createReservation(ownerId, reservation));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Reservation> updateReservation(@PathVariable String id, @RequestBody Reservation reservation) {
-        return ResponseEntity.ok(reservationService.updateReservation(id, reservation));
+        return ResponseEntity.ok(reservationService.updateReservation(id, ownerId, reservation));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReservation(@PathVariable String id) {
-        reservationService.deleteReservation(id);
+        reservationService.deleteReservation(id, ownerId);
         return ResponseEntity.noContent().build();
     }
 }
