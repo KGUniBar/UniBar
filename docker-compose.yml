@@ -19,9 +19,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5174:5173"
+      - "5173:5173"
     environment:
-      - VITE_API_BASE_URL=http://backend:8080/api
+      - VITE_API_BASE_URL=http://localhost:8080/api
     volumes:
       # Mounts the local frontend code into the container for live-reloading
       # but keeps the container's node_modules

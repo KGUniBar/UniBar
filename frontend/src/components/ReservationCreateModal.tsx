@@ -92,7 +92,7 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
             <div className="input-wrapper">
               <input
                 id="date"
-                name="date"
+                name="reservationTime"
                 type="date"
                 value={formData.reservationTime}
                 onChange={handleChange}

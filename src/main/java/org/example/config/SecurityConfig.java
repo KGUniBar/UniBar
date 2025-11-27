@@ -34,7 +34,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/").permitAll()
-                .requestMatchers("/api/reservations/**").authenticated()
+                .requestMatchers("/api/orders/**", "/api/reservations/**").authenticated() // 주문 API 인증 필요 명시
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -50,7 +50,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:80"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // 5173, 5174 포트 허용
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -60,4 +60,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
