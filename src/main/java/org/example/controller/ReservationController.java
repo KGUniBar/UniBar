@@ -14,25 +14,29 @@ import java.util.List;
 public class ReservationController {
 
     private final ReservationService reservationService;
-    private final String ownerId = "dummy-owner"; // 임시 ownerId
+    private final org.example.util.SecurityUtil securityUtil;
 
     @GetMapping
     public ResponseEntity<List<Reservation>> getReservations() {
+        String ownerId = securityUtil.getCurrentUserId();
         return ResponseEntity.ok(reservationService.getReservations(ownerId));
     }
 
     @PostMapping
     public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservation) {
+        String ownerId = securityUtil.getCurrentUserId();
         return ResponseEntity.ok(reservationService.createReservation(ownerId, reservation));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Reservation> updateReservation(@PathVariable String id, @RequestBody Reservation reservation) {
+        String ownerId = securityUtil.getCurrentUserId();
         return ResponseEntity.ok(reservationService.updateReservation(id, ownerId, reservation));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReservation(@PathVariable String id) {
+        String ownerId = securityUtil.getCurrentUserId();
         reservationService.deleteReservation(id, ownerId);
         return ResponseEntity.noContent().build();
     }

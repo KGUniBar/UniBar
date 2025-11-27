@@ -2,9 +2,9 @@ name: Reservation Feature Test
 
 on:
   push:
-    branches: [ "reservation_feature", "main" ]
+    branches: [ "main", "develop", "reservation_feature" ]
   pull_request:
-    branches: [ "main", "reservation_feature" ]
+    branches: [ "main", "develop", "reservation_feature" ]
 
 jobs:
   test-reservation-feature:
