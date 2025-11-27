@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { fetchQrCode } from '../api/qrCodeClient'
 import './PaymentModal.css'
 
 interface PaymentModalProps {
@@ -11,32 +12,22 @@ function PaymentModal({ onClose, onPaymentComplete, totalPrice }: PaymentModalPr
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
-  // localStorage에서 QR 코드 이미지 불러오기
+  // 서버에서 QR 코드 이미지 불러오기
   useEffect(() => {
-    const loadQrCode = () => {
-      const savedQrCode = localStorage.getItem('qrCodeImage')
-      if (savedQrCode) {
-        setQrCodeImage(savedQrCode)
+    const loadQrCode = async () => {
+      try {
+        const data = await fetchQrCode()
+        if (data) {
+          setQrCodeImage(data.imageData)
+        } else {
+          setQrCodeImage(null)
+        }
+      } catch (error) {
+        console.error('QR 코드 불러오기 실패:', error)
       }
     }
 
     loadQrCode()
-
-    // QR 코드가 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadQrCode()
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
-    const interval = setInterval(() => {
-      loadQrCode()
-    }, 500)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
-    }
   }, [])
 
   return (

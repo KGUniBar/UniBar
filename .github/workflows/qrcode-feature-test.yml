@@ -1,0 +1,31 @@
+name: QRCode Feature Tests
+
+on:
+  push:
+    branches: [ "main", "develop", "qr_feature" ]
+  pull_request:
+    branches: [ "main", "develop", "qr_feature" ]
+
+
+jobs:
+  qr_feature_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run QRCode tests
+        run: ./gradlew test --tests "*QrCode*Test"
+
+

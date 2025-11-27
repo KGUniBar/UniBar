@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './ResetPasswordModal.css'
+import { resetPassword, type PasswordResetRequest } from '../api/client'
 
 interface ResetPasswordModalProps {
   isOpen: boolean
@@ -13,12 +14,44 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
     newPassword: '',
     confirmNewPassword: ''
   })
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 비밀번호 재설정 로직 구현
-    console.log('비밀번호 재설정 시도:', formData)
-    // TODO: API 호출
+    setError(null)
+    
+    // 유효성 검사
+    if (formData.newPassword !== formData.confirmNewPassword) {
+      setError('새 비밀번호가 일치하지 않습니다.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+        const requestData: PasswordResetRequest = {
+            username: formData.userId,
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword
+        }
+
+        await resetPassword(requestData)
+        alert('비밀번호가 성공적으로 변경되었습니다.')
+        onClose()
+        
+        // 초기화
+        setFormData({
+            userId: '',
+            currentPassword: '',
+            newPassword: '',
+            confirmNewPassword: ''
+        })
+    } catch (err) {
+        setError(err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다.')
+    } finally {
+        setIsLoading(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +77,7 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
                 type="text"
                 value={formData.userId}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -58,6 +92,7 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
                 type="password"
                 value={formData.currentPassword}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -72,6 +107,7 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
                 type="password"
                 value={formData.newPassword}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -86,17 +122,20 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
                 type="password"
                 value={formData.confirmNewPassword}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
+          
+          {error && <div className="error-message" style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
 
           {/* 버튼 */}
           <div className="modal-buttons">
-            <button type="button" className="cancel-button" onClick={onClose}>
+            <button type="button" className="cancel-button" onClick={onClose} disabled={isLoading}>
               취소
             </button>
-            <button type="submit" className="submit-button">
-              재설정
+            <button type="submit" className="submit-button" disabled={isLoading}>
+              {isLoading ? '처리 중...' : '재설정'}
             </button>
           </div>
         </form>
@@ -106,4 +145,3 @@ function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
 }
 
 export default ResetPasswordModal
-

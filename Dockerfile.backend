@@ -1,0 +1,18 @@
+# 백엔드 (Spring Boot) 개발용 Dockerfile
+FROM gradle:8.5-jdk17 AS builder
+WORKDIR /app
+COPY . .
+
+# CRLF -> LF 변환
+RUN apt-get update && apt-get install -y dos2unix
+RUN dos2unix ./gradlew
+
+RUN chmod +x ./gradlew
+RUN ./gradlew clean bootJar
+
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
