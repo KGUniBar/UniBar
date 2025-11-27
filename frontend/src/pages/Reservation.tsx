@@ -1,28 +1,72 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import ReservationCreateModal from '../components/ReservationCreateModal'
 import ReservationEditModal from '../components/ReservationEditModal'
 import ReservationCompleteModal from '../components/ReservationCompleteModal'
 import './Reservation.css'
+import {
+  Reservation,
+  getReservations,
+  createReservation,
+  updateReservation,
+  deleteReservation,
+} from '../api/reservation'
 
-interface Reservation {
-  id: number
-  name: string
-  people: number
-  date: string
+interface User {
+  id: string
+  userId: string
+  name?: string
 }
 
-function Reservation() {
+function ReservationPage() {
   const navigate = useNavigate()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+
+  const handleError = (error: any) => {
+    let message = '오류가 발생했습니다. 다시 시도해주세요.';
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      message = '서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.';
+    } else if (error.message) {
+      message = error.message;
+    }
+    console.error(error)
+    setError(message)
+    alert(message)
+  }
+
+  const fetchReservations = async () => {
+    try {
+      const data = await getReservations()
+      setReservations(data)
+    } catch (error) {
+      handleError(error)
+    }
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/')
+      return
+    }
+
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
+    fetchReservations()
+  }, [navigate])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     navigate('/')
   }
 
@@ -37,13 +81,14 @@ function Reservation() {
     return `${year}.${month}.${day} (${weekday})`
   }
 
-  const handleCreateReservation = (reservation: Omit<Reservation, 'id'>) => {
-    const newReservation: Reservation = {
-      ...reservation,
-      id: Date.now() // 임시 ID 생성
+  const handleCreateReservation = async (reservation: Omit<Reservation, 'id' | 'reservationId' | 'createdAt' | 'status'>) => {
+    try {
+      await createReservation(reservation)
+      fetchReservations()
+      setIsCreateModalOpen(false)
+    } catch (error) {
+      handleError(error)
     }
-    setReservations([...reservations, newReservation])
-    setIsCreateModalOpen(false)
   }
 
   const handleEditClick = (reservation: Reservation) => {
@@ -51,12 +96,16 @@ function Reservation() {
     setIsEditModalOpen(true)
   }
 
-  const handleEditReservation = (updatedReservation: Reservation) => {
-    setReservations(reservations.map(r => 
-      r.id === updatedReservation.id ? updatedReservation : r
-    ))
-    setIsEditModalOpen(false)
-    setSelectedReservation(null)
+  const handleEditReservation = async (updatedReservation: Reservation) => {
+    if (!updatedReservation.id) return
+    try {
+      await updateReservation(updatedReservation.id, updatedReservation)
+      fetchReservations()
+      setIsEditModalOpen(false)
+      setSelectedReservation(null)
+    } catch (error) {
+      handleError(error)
+    }
   }
 
   const handleCompleteClick = (reservation: Reservation) => {
@@ -64,23 +113,38 @@ function Reservation() {
     setIsCompleteModalOpen(true)
   }
 
-  const handleCompleteConfirm = () => {
-    if (selectedReservation) {
-      setReservations(reservations.filter(r => r.id !== selectedReservation.id))
-      setIsCompleteModalOpen(false)
-      setSelectedReservation(null)
+  const handleCompleteConfirm = async () => {
+    if (selectedReservation && selectedReservation.id) {
+      try {
+        await updateReservation(selectedReservation.id, { ...selectedReservation, status: 'completed' })
+        fetchReservations()
+        setIsCompleteModalOpen(false)
+        setSelectedReservation(null)
+      } catch (error) {
+        handleError(error)
+      }
     }
   }
 
-  const hasValidData = (reservation: Reservation) => {
-    return reservation.name && reservation.people > 0 && reservation.date
+  const handleDeleteClick = async (id: string) => {
+    if (window.confirm('정말로 이 예약을 삭제하시겠습니까?')) {
+      try {
+        await deleteReservation(id)
+        fetchReservations()
+      } catch (error) {
+        handleError(error)
+      }
+    }
   }
 
-  // 날짜 형식 변환 (YYYY-MM-DD -> YYYY.MM.DD)
-  const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    return dateString.replace(/-/g, '.')
+  const formatDate = (date: Date) => {
+    if (!date) return ''
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
   }
+
+  const activeReservations = reservations.filter(
+    (reservation) => reservation.status !== 'completed'
+  );
 
   return (
     <div className="reservation-container">
@@ -92,7 +156,7 @@ function Reservation() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
+          <div className="header-greeting">{user?.name || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>
@@ -102,7 +166,7 @@ function Reservation() {
         <div className="reservation-content">
           <div className="reservation-header">
             <h1 className="reservation-title">홀 예약</h1>
-            <button 
+            <button
               className="reservation-register-button"
               onClick={() => setIsCreateModalOpen(true)}
             >
@@ -115,42 +179,50 @@ function Reservation() {
             <table className="reservation-table">
               <thead>
                 <tr>
-                  <th>예약자명</th>
-                  <th>인원수</th>
-                  <th>예약일</th>
+                  <th>고객명</th>
+                  <th>연락처</th>
+                  <th>예약 시간</th>
+                  <th>인원</th>
+                  <th>상태</th>
                   <th>작업</th>
                 </tr>
               </thead>
               <tbody>
-                {reservations.length === 0 ? (
+                {activeReservations.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="empty-table-message">
+                    <td colSpan={6} className="empty-table-message">
                       등록된 예약이 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  reservations.map((reservation) => (
+                  activeReservations.map((reservation) => (
                     <tr key={reservation.id}>
-                      <td>{reservation.name}</td>
-                      <td>{reservation.people}</td>
-                      <td>{formatDate(reservation.date)}</td>
+                      <td>{reservation.customerName}</td>
+                      <td>{reservation.phoneNumber}</td>
+                      <td>{formatDate(reservation.reservationTime)}</td>
+                      <td>{reservation.numberOfGuests}</td>
+                      <td>{reservation.status}</td>
                       <td>
-                        {hasValidData(reservation) && (
-                          <div className="action-buttons">
-                            <button
-                              className="edit-button"
-                              onClick={() => handleEditClick(reservation)}
-                            >
-                              수정
-                            </button>
-                            <button
-                              className="complete-button"
-                              onClick={() => handleCompleteClick(reservation)}
-                            >
-                              완료
-                            </button>
-                          </div>
-                        )}
+                        <div className="action-buttons">
+                          <button
+                            className="edit-button"
+                            onClick={() => handleEditClick(reservation)}
+                          >
+                            수정
+                          </button>
+                          <button
+                            className="complete-button"
+                            onClick={() => handleCompleteClick(reservation)}
+                          >
+                            완료
+                          </button>
+                          <button
+                            className="delete-button"
+                            onClick={() => handleDeleteClick(reservation.id!)}
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -194,5 +266,4 @@ function Reservation() {
   )
 }
 
-export default Reservation
-
+export default ReservationPage

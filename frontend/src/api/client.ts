@@ -1,6 +1,21 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export const jsonHeaders = { 'Content-Type': 'application/json' }
+
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    // Or handle this case as you see fit, maybe throw an error
+    // or redirect to login. For now, just logging and returning basic headers.
+    console.warn('Authentication token not found.')
+    return jsonHeaders;
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }
+}
 
 export const parseError = async (response: Response, defaultMessage: string) => {
   const text = await response.text()

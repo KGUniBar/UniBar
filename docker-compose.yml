@@ -1,51 +1,49 @@
-version: '3.8'
-
 services:
-  # 1. 백엔드 (Spring Boot)
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     ports:
       - "8080:8080"
+    environment:
+      # Add any necessary environment variables for the backend here
+      # For example, MongoDB connection string
+      SPRING_DATA_MONGODB_URI: "mongodb://mongodb:27017/unibar"
     depends_on:
       - mongodb
-    environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/unibar
     networks:
-      - unibar-network
+      - unibar-net
 
-  # 2. 프론트엔드 (React)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app # 코드 수정 시 실시간 반영 (Hot Reload)
-      - /app/node_modules # 로컬 node_modules 덮어쓰기 방지
+      - "5174:5173"
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_BASE_URL=http://backend:8080/api
+    volumes:
+      # Mounts the local frontend code into the container for live-reloading
+      # but keeps the container's node_modules
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
     networks:
-      - unibar-network
+      - unibar-net
 
-  # 3. 데이터베이스 (MongoDB)
   mongodb:
     image: mongo:latest
-    container_name: unibar-mongo
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo-data:/data/db
     networks:
-      - unibar-network
-
-volumes:
-  mongo_data:
+      - unibar-net
 
 networks:
-  unibar-network:
+  unibar-net:
     driver: bridge
+
+volumes:
+  mongo-data:
