@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://backend:8080', // 백엔드 컨테이너로 프록시
+        target: 'http://localhost:8080', // 백엔드 컨테이너로 프록시
         changeOrigin: true,
       }
     }

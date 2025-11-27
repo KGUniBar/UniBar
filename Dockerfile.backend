@@ -1,18 +1,12 @@
-# 백엔드 (Spring Boot) 개발용 Dockerfile
-FROM gradle:8.5-jdk17 AS builder
+# Stage 1: Build the application
+FROM gradle:8.5.0-jdk17-alpine AS builder
 WORKDIR /app
 COPY . .
+RUN gradle build --no-daemon
 
-# CRLF -> LF 변환
-RUN apt-get update && apt-get install -y dos2unix
-RUN dos2unix ./gradlew
-
-RUN chmod +x ./gradlew
-RUN ./gradlew clean bootJar
-
+# Stage 2: Create the final image
 FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
-
+COPY --from=builder /app/build/libs/UniBar-1.0-SNAPSHOT.jar ./app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
