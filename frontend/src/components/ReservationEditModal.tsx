@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
 import './ReservationEditModal.css'
-
-interface Reservation {
-  id: number
-  name: string
-  people: number
-  date: string
-}
+import { Reservation } from '../api/reservation'
 
 interface ReservationEditModalProps {
   isOpen: boolean
@@ -17,29 +11,32 @@ interface ReservationEditModalProps {
 
 function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: ReservationEditModalProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    people: '',
-    date: ''
+    customerName: '',
+    phoneNumber: '',
+    numberOfGuests: '',
+    reservationTime: ''
   })
 
   useEffect(() => {
     if (isOpen && reservation) {
       setFormData({
-        name: reservation.name,
-        people: reservation.people.toString(),
-        date: reservation.date
+        customerName: reservation.customerName,
+        phoneNumber: reservation.phoneNumber,
+        numberOfGuests: reservation.numberOfGuests.toString(),
+        reservationTime: reservation.reservationTime.toISOString().substring(0, 16)
       })
     }
   }, [isOpen, reservation])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.name && formData.people && formData.date) {
+    if (formData.customerName && formData.phoneNumber && formData.numberOfGuests && formData.reservationTime) {
       onUpdate({
         ...reservation,
-        name: formData.name,
-        people: parseInt(formData.people),
-        date: formData.date
+        customerName: formData.customerName,
+        phoneNumber: formData.phoneNumber,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        reservationTime: new Date(formData.reservationTime)
       })
     }
   }
@@ -59,29 +56,42 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
         <form onSubmit={handleSubmit}>
           {/* 예약자명 */}
           <div className="input-group">
-            <label htmlFor="edit-name">예약자명</label>
+            <label htmlFor="edit-customerName">고객명</label>
             <div className="input-wrapper">
               <input
-                id="edit-name"
-                name="name"
+                id="edit-customerName"
+                name="customerName"
                 type="text"
-                value={formData.name}
+                value={formData.customerName}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
-          {/* 인원수 */}
           <div className="input-group">
-            <label htmlFor="edit-people">인원수</label>
+            <label htmlFor="edit-phoneNumber">연락처</label>
             <div className="input-wrapper">
               <input
-                id="edit-people"
-                name="people"
+                id="edit-phoneNumber"
+                name="phoneNumber"
+                type="text"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="edit-numberOfGuests">인원</label>
+            <div className="input-wrapper">
+              <input
+                id="edit-numberOfGuests"
+                name="numberOfGuests"
                 type="number"
                 min="1"
-                value={formData.people}
+                value={formData.numberOfGuests}
                 onChange={handleChange}
                 required
               />
@@ -96,7 +106,7 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
                 id="edit-date"
                 name="date"
                 type="date"
-                value={formData.date}
+                value={formData.reservationTime}
                 onChange={handleChange}
                 required
               />
@@ -119,4 +129,3 @@ function ReservationEditModal({ isOpen, onClose, reservation, onUpdate }: Reserv
 }
 
 export default ReservationEditModal
-
