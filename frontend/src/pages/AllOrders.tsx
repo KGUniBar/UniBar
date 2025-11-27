@@ -1,55 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { getAllOrders, type Order } from '../api/orderClient'
 import './AllOrders.css'
-
-interface OrderItem {
-  id: number
-  name: string
-  quantity: number
-}
-
-interface Order {
-  id: number
-  tableId: number
-  tableName: string
-  items: OrderItem[]
-  orderTime: string
-  totalPrice?: number
-}
 
 function AllOrders() {
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
 
-  // localStorage에서 전체 주문 내역 불러오기
+  // 서버에서 전체 주문 내역 불러오기
   useEffect(() => {
-    const loadAllOrders = () => {
-      const savedOrders = localStorage.getItem('allOrders')
-      if (savedOrders) {
-        setOrders(JSON.parse(savedOrders))
-      } else {
+    const loadAllOrders = async () => {
+      try {
+        const data = await getAllOrders()
+        setOrders(data)
+      } catch (error) {
+        console.error('전체 주문 내역 불러오기 실패:', error)
         setOrders([])
       }
     }
-    
+
     loadAllOrders()
-    
-    // 주문 내역이 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadAllOrders()
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
-    const interval = setInterval(() => {
-      loadAllOrders()
-    }, 500)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
-    }
   }, [])
 
   const handleLogout = () => {
@@ -78,7 +49,7 @@ function AllOrders() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">000님 안녕하세요 :)</div>
+          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>
@@ -107,7 +78,7 @@ function AllOrders() {
                   </tr>
                 ) : (
                   orders.map((order) => (
-                    <tr key={order.id}>
+                    <tr key={order.id ?? order.orderId}>
                       <td>{order.tableName}</td>
                       <td>
                         <div className="order-items-list">
@@ -132,4 +103,6 @@ function AllOrders() {
 }
 
 export default AllOrders
+
+
 
