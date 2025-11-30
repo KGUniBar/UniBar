@@ -32,6 +32,17 @@ services:
     networks:
       - unibar-net
 
+  metabase:
+    image: metabase/metabase
+    ports:
+      - "3000:3000"
+    networks:
+      - unibar-net  # 중요: 몽고디비와 같은 네트워크를 써야 서로 찾을 수 있습니다.
+    depends_on:
+      - mongodb
+    volumes:
+      - metabase-data:/metabase.db # 메타베이스 설정(차트 등)이 날아가지 않게 저장
+
   mongodb:
     image: mongo:latest
     ports:
@@ -41,9 +52,11 @@ services:
     networks:
       - unibar-net
 
+  
 networks:
   unibar-net:
     driver: bridge
 
 volumes:
   mongo-data:
+  metabase-data:
