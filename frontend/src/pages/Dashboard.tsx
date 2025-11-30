@@ -179,10 +179,14 @@ function Dashboard() {
           {/* 시간대별 매출 차트 */}
           <div className="chart-container">
             <h2 className="chart-title">시간대별 매출</h2>
-            {/* 차트 영역 - 나중에 차트 라이브러리로 구현 */}
-            <div className="chart-placeholder">
-              차트 영역
-            </div>
+            <iframe
+              title="시간대별 매출"
+              src="http://localhost:3000/public/question/602cb48a-735f-438e-b985-e4e32daa76a1"
+              frameBorder="0"
+              width="100%"
+              height="400"
+              allowTransparency
+            ></iframe>
           </div>
         </div>
       </div>
