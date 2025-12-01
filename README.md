@@ -178,7 +178,79 @@
 
 ---
 
-## 6. CI / GitHub Actions 요약
+## 6. DB 설계 (Database Schema)
+
+### Database: MongoDB
+모든 데이터는 **MongoDB**에 저장되며, 논리적인 데이터 격리는 `ownerId` (사용자 ID)를 기준으로 이루어집니다.
+
+### 1. Users (사용자)
+* **Collection**: `users`
+* **Description**: 서비스 회원 가입 사용자 정보
+* **Fields**:
+    * `_id`: ObjectId (PK)
+    * `username`: String (Unique, 로그인 아이디)
+    * `password`: String (BCrypt Encrypted)
+    * `name`: String (사용자 이름)
+    * `phoneNumber`: String (연락처)
+    * `createdAt`: Date (가입일)
+
+### 2. Menus (메뉴)
+* **Collection**: `menus`
+* **Description**: 점주별 등록한 메뉴 정보
+* **Fields**:
+    * `_id`: ObjectId (PK)
+    * `ownerId`: String (Index, 소유자 ID)
+    * `menuId`: Long (메뉴 고유 식별자, Timestamp 기반)
+    * `name`: String (메뉴명)
+    * `price`: Long (가격)
+    * `createdAt`: Date (등록일)
+
+### 3. Orders (주문)
+* **Collection**: `orders`
+* **Description**: 테이블별 주문 및 결제 내역
+* **Fields**:
+    * `_id`: String (PK, UUID)
+    * `ownerId`: String (Index, 소유자 ID)
+    * `orderId`: Long (주문 번호)
+    * `tableId`: Integer (테이블 번호)
+    * `tableName`: String (테이블명)
+    * `items`: Array[Object] (주문 항목 리스트)
+        * `menuId`: Long
+        * `menuName`: String
+        * `price`: Long
+        * `quantity`: Integer
+    * `totalPrice`: Long (총 주문 금액)
+    * `isPaid`: Boolean (결제 여부, `true`: 결제완료, `false`: 미결제)
+    * `isCompleted`: Boolean (조리/서빙 완료 여부)
+    * `orderDate`: String (주문 날짜 `YYYY-MM-DD`)
+    * `createdAt`: Date (주문 생성 시간)
+
+### 4. Reservations (예약)
+* **Collection**: `reservations`
+* **Description**: 홀 예약 정보
+* **Fields**:
+    * `_id`: String (PK)
+    * `ownerId`: String (Index, 소유자 ID)
+    * `reservationId`: Long (예약 번호)
+    * `customerName`: String (예약자명)
+    * `phoneNumber`: String (연락처)
+    * `reservationTime`: Date (예약 시간)
+    * `numberOfGuests`: Integer (인원 수)
+    * `status`: String (상태: `confirmed`, `cancelled`, `completed`)
+    * `createdAt`: Date (예약 생성 시간)
+
+### 5. QrCodes (QR 코드)
+* **Collection**: `qrcodes`
+* **Description**: 점주별 결제용 QR 코드 이미지
+* **Fields**:
+    * `_id`: String (PK)
+    * `ownerId`: String (Index, 소유자 ID)
+    * `imageData`: String (Base64 Encoded Image Data)
+    * `createdAt`: Date (등록일)
+
+---
+
+## 7. CI / GitHub Actions 요약
 
 - **백엔드 통합 CI**: `.github/workflows/backend-ci.yml`
   - `main`, `develop` 브랜치에서 전체 `./gradlew build` 실행
@@ -191,7 +263,7 @@
 
 ---
 
-## 7. 로컬 실행 & 테스트
+## 8. 로컬 실행 & 테스트
 
 - **백엔드**
   - 로컬에서 MongoDB 가 필요하며, Docker Compose 사용 시:
