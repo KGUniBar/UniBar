@@ -1,23 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { getAllOrders, type Order } from '../api/orderClient'
 import './Dashboard.css'
-
-interface Order {
-  id: number
-  tableId: number
-  tableName: string
-  items: any[]
-  orderTime: string
-  orderDate?: string
-  totalPrice: number
-}
 
 function Dashboard() {
   const navigate = useNavigate()
   const [selectedPeriod, setSelectedPeriod] = useState<'yesterday' | 'today' | 'week'>('today')
   const [totalSales, setTotalSales] = useState<number>(0)
   const [totalOrderCount, setTotalOrderCount] = useState<number>(0)
+  const [orders, setOrders] = useState<Order[]>([])
 
   // 날짜 범위 계산 함수
   const getDateRange = (period: 'yesterday' | 'today' | 'week') => {
@@ -58,58 +50,47 @@ function Dashboard() {
   }
 
   // 기간별 통계 계산
-  const calculatePeriodStats = (period: 'yesterday' | 'today' | 'week') => {
-    const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]') as Order[]
+  const calculatePeriodStats = (orders: Order[], period: 'yesterday' | 'today' | 'week') => {
     const { start, end } = getDateRange(period)
-    
-    // 주문 날짜가 있는 경우 날짜로 필터링, 없는 경우는 id(타임스탬프)로 필터링
-    const filteredOrders = allOrders.filter(order => {
-      let orderDate: Date
-      
+
+    const filteredOrders = orders.filter(order => {
+      let orderDate: Date | null = null
+
       if (order.orderDate) {
-        // orderDate가 "YYYY-MM-DD" 형식인 경우
         const [year, month, day] = order.orderDate.split('-').map(Number)
         orderDate = new Date(year, month - 1, day)
-      } else {
-        // orderDate가 없는 경우 id(타임스탬프)로 판단
-        orderDate = new Date(order.id)
-        orderDate.setHours(0, 0, 0, 0)
+      } else if (order.orderId) {
+        orderDate = new Date(order.orderId)
       }
-      
+
+      if (!orderDate) return false
+
       return orderDate >= start && orderDate <= end
     })
-    
+
     const sales = filteredOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0)
     const orderCount = filteredOrders.length
-    
+
     return { sales, orderCount }
   }
 
-  // localStorage에서 기간별 통계 불러오기
+  // 서버에서 주문을 불러와 기간별 통계 계산
   useEffect(() => {
-    const loadStats = () => {
-      const stats = calculatePeriodStats(selectedPeriod)
-      setTotalSales(stats.sales)
-      setTotalOrderCount(stats.orderCount)
-    }
-    
-    loadStats()
-    
-    // 통계가 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadStats()
+    const loadAndCalculate = async () => {
+      try {
+        const data = await getAllOrders()
+        setOrders(data)
+        const stats = calculatePeriodStats(data, selectedPeriod)
+        setTotalSales(stats.sales)
+        setTotalOrderCount(stats.orderCount)
+      } catch (error) {
+        console.error('대시보드 통계 불러오기 실패:', error)
+        setTotalSales(0)
+        setTotalOrderCount(0)
+      }
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
-    const interval = setInterval(() => {
-      loadStats()
-    }, 500)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
-    }
+    loadAndCalculate()
   }, [selectedPeriod])
 
   const handleLogout = () => {
@@ -138,7 +119,7 @@ function Dashboard() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">000님 안녕하세요 :)</div>
+          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>

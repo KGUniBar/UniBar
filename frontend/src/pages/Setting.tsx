@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { fetchQrCode, uploadQrCode } from '../api/qrCodeClient'
+import { fetchMenus, createMenu as createMenuApi, updateMenu as updateMenuApi, deleteMenu as deleteMenuApi, type Menu as ApiMenu } from '../api/menuClient'
 import './Setting.css'
 
 type SettingTab = 'table' | 'menu' | 'qrcode'
 
 interface Menu {
-  id: number
+  id: string
   name: string
   price: number
 }
@@ -38,20 +40,43 @@ function Setting() {
     }
   }, [])
 
-  // localStorage에서 메뉴 불러오기
+  // 서버에서 메뉴 불러오기
   useEffect(() => {
-    const savedMenus = localStorage.getItem('menus')
-    if (savedMenus) {
-      setMenus(JSON.parse(savedMenus))
+    const loadMenus = async () => {
+      try {
+        const data: ApiMenu[] = await fetchMenus()
+        // API에서 받은 데이터를 프론트엔드에서 사용하는 형태로 매핑
+        const mapped: Menu[] = data.map(menu => ({
+          id: menu.id ?? String(menu.menuId ?? ''),
+          name: menu.name,
+          price: menu.price,
+        }))
+        setMenus(mapped)
+      } catch (error) {
+        console.error('메뉴 불러오기 실패:', error)
+        setMenus([])
+      }
     }
+
+    loadMenus()
   }, [])
 
-  // localStorage에서 QR 코드 이미지 불러오기
+  // 서버에서 QR 코드 이미지 불러오기
   useEffect(() => {
-    const savedQrCode = localStorage.getItem('qrCodeImage')
-    if (savedQrCode) {
-      setQrCodeImage(savedQrCode)
+    const loadQrCode = async () => {
+      try {
+        const data = await fetchQrCode()
+        if (data) {
+          setQrCodeImage(data.imageData)
+        } else {
+          setQrCodeImage(null)
+        }
+      } catch (error) {
+        console.error('QR 코드 불러오기 실패:', error)
+      }
     }
+
+    loadQrCode()
   }, [])
 
   const handleLogout = () => {
@@ -94,8 +119,8 @@ function Setting() {
     setIsConfirmModalOpen(false)
   }
 
-  // 메뉴 추가
-  const handleAddMenu = () => {
+  // 메뉴 추가 (MongoDB 저장)
+  const handleAddMenu = async () => {
     if (!menuName.trim() || !menuPrice.trim()) {
       alert('메뉴명과 금액을 모두 입력해주세요.')
       return
@@ -107,18 +132,27 @@ function Setting() {
       return
     }
 
-    const newMenu: Menu = {
-      id: Date.now(),
-      name: menuName.trim(),
-      price: price
-    }
+    try {
+      const created = await createMenuApi({
+        name: menuName.trim(),
+        price: price,
+      })
 
-    const updatedMenus = [...menus, newMenu]
-    setMenus(updatedMenus)
-    localStorage.setItem('menus', JSON.stringify(updatedMenus))
-    
-    setMenuName('')
-    setMenuPrice('')
+      const newMenu: Menu = {
+        id: created.id ?? String(created.menuId ?? ''),
+        name: created.name,
+        price: created.price,
+      }
+
+      const updatedMenus = [...menus, newMenu]
+      setMenus(updatedMenus)
+      
+      setMenuName('')
+      setMenuPrice('')
+    } catch (error) {
+      console.error('메뉴 등록 실패:', error)
+      alert('메뉴 등록에 실패했습니다.')
+    }
   }
 
   // 메뉴 수정 모달 열기
@@ -129,8 +163,8 @@ function Setting() {
     setIsMenuEditModalOpen(true)
   }
 
-  // 메뉴 수정
-  const handleEditMenu = () => {
+  // 메뉴 수정 (MongoDB 반영)
+  const handleEditMenu = async () => {
     if (!editMenuName.trim() || !editMenuPrice.trim()) {
       alert('메뉴명과 금액을 모두 입력해주세요.')
       return
@@ -144,26 +178,42 @@ function Setting() {
 
     if (editingMenuId === null) return
 
-    const updatedMenus = menus.map(menu =>
-      menu.id === editingMenuId
-        ? { ...menu, name: editMenuName.trim(), price: price }
-        : menu
-    )
-    setMenus(updatedMenus)
-    localStorage.setItem('menus', JSON.stringify(updatedMenus))
-    
-    setIsMenuEditModalOpen(false)
-    setEditingMenuId(null)
-    setEditMenuName('')
-    setEditMenuPrice('')
+    try {
+      const updated = await updateMenuApi(editingMenuId, {
+        name: editMenuName.trim(),
+        price: price,
+      })
+
+      const updatedMenus = menus.map(menu =>
+        menu.id === editingMenuId
+          ? { ...menu, name: updated.name, price: updated.price }
+          : menu
+      )
+      setMenus(updatedMenus)
+      
+      setIsMenuEditModalOpen(false)
+      setEditingMenuId(null)
+      setEditMenuName('')
+      setEditMenuPrice('')
+    } catch (error) {
+      console.error('메뉴 수정 실패:', error)
+      alert('메뉴 수정에 실패했습니다.')
+    }
   }
 
-  // 메뉴 삭제
-  const handleDeleteMenu = (menuId: number) => {
-    if (window.confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+  // 메뉴 삭제 (MongoDB 반영)
+  const handleDeleteMenu = async (menuId: string) => {
+    if (!window.confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      await deleteMenuApi(menuId)
       const updatedMenus = menus.filter(menu => menu.id !== menuId)
       setMenus(updatedMenus)
-      localStorage.setItem('menus', JSON.stringify(updatedMenus))
+    } catch (error) {
+      console.error('메뉴 삭제 실패:', error)
+      alert('메뉴 삭제에 실패했습니다.')
     }
   }
 
@@ -176,7 +226,7 @@ function Setting() {
   }
 
   // QR 코드 이미지 업로드
-  const handleQrCodeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQrCodeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -193,10 +243,15 @@ function Setting() {
     }
 
     const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64String = reader.result as string
-      setQrCodeImage(base64String)
-      localStorage.setItem('qrCodeImage', base64String)
+    reader.onloadend = async () => {
+      try {
+        const base64String = reader.result as string
+        const saved = await uploadQrCode(base64String)
+        setQrCodeImage(saved.imageData)
+      } catch (error) {
+        console.error('QR 코드 업로드 실패:', error)
+        alert('QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      }
     }
     reader.readAsDataURL(file)
   }
@@ -216,7 +271,7 @@ function Setting() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">000님 안녕하세요 :)</div>
+          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>

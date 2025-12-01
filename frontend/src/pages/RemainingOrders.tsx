@@ -1,60 +1,36 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { getRemainingOrders, completeOrder, type Order } from '../api/orderClient'
 import './RemainingOrders.css'
-
-interface OrderItem {
-  id: number
-  name: string
-  quantity: number
-}
-
-interface Order {
-  id: number
-  tableId: number
-  tableName: string
-  items: OrderItem[]
-  orderTime: string
-  totalPrice?: number
-  isCompleted?: boolean
-}
 
 function RemainingOrders() {
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedOrderInfo, setSelectedOrderInfo] = useState<Order | null>(null)
 
-  // localStorage에서 전체 주문 내역 불러오기 (조리 완료되지 않은 것만)
+  // DB에서 잔여 주문(결제 완료 + 조리 미완료) 불러오기
   useEffect(() => {
-    const loadRemainingOrders = () => {
-      const allOrders = JSON.parse(localStorage.getItem('allOrders') || '[]')
-      const completedOrderIds = JSON.parse(localStorage.getItem('completedOrderIds') || '[]')
-      
-      // 조리 완료되지 않은 주문만 필터링
-      const remainingOrders = allOrders.filter((order: Order) => 
-        !completedOrderIds.includes(order.id)
-      )
-      
-      setOrders(remainingOrders)
-    }
-    
-    loadRemainingOrders()
-    
-    // 주문 내역이 변경될 때마다 업데이트
-    const handleStorageChange = () => {
-      loadRemainingOrders()
+    const loadRemainingOrders = async () => {
+      try {
+        const data = await getRemainingOrders()
+        setOrders(data)
+      } catch (error) {
+        console.error('잔여 주문 불러오기 실패:', error)
+        setOrders([])
+      }
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    // 같은 탭에서 변경된 경우를 위해 interval로 체크
+    loadRemainingOrders()
+
+    // 간단한 폴링으로 주기적인 갱신
     const interval = setInterval(() => {
       loadRemainingOrders()
-    }, 500)
+    }, 3000)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
       clearInterval(interval)
     }
   }, [])
@@ -76,27 +52,26 @@ function RemainingOrders() {
   }
 
   const handleCompleteClick = (order: Order) => {
+    if (!order.id) return
     setSelectedOrderId(order.id)
     setSelectedOrderInfo(order)
     setIsCompleteModalOpen(true)
   }
 
-  const handleConfirmComplete = () => {
-    if (selectedOrderId === null) return
+  const handleConfirmComplete = async () => {
+    if (!selectedOrderId) return
 
-    // 조리 완료된 주문 ID를 localStorage에 저장
-    const completedOrderIds = JSON.parse(localStorage.getItem('completedOrderIds') || '[]')
-    if (!completedOrderIds.includes(selectedOrderId)) {
-      completedOrderIds.push(selectedOrderId)
-      localStorage.setItem('completedOrderIds', JSON.stringify(completedOrderIds))
-      
-      // 상태 업데이트
-      setOrders(orders.filter(order => order.id !== selectedOrderId))
+    try {
+      await completeOrder(selectedOrderId)
+      setOrders((prev) => prev.filter(order => order.id !== selectedOrderId))
+    } catch (error) {
+      console.error('조리 완료 처리 실패:', error)
+      alert(error instanceof Error ? error.message : '조리 완료 처리에 실패했습니다.')
+    } finally {
+      setIsCompleteModalOpen(false)
+      setSelectedOrderId(null)
+      setSelectedOrderInfo(null)
     }
-
-    setIsCompleteModalOpen(false)
-    setSelectedOrderId(null)
-    setSelectedOrderInfo(null)
   }
 
   const handleCancelComplete = () => {
@@ -115,7 +90,7 @@ function RemainingOrders() {
         {/* 상단 헤더 */}
         <div className="top-header">
           <div className="header-date">{getCurrentDate()}</div>
-          <div className="header-greeting">000님 안녕하세요 :)</div>
+          <div className="header-greeting">{localStorage.getItem('userName') || '000'}님 안녕하세요 :)</div>
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>

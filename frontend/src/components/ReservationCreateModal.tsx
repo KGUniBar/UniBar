@@ -1,29 +1,31 @@
 import { useState } from 'react'
 import './ReservationCreateModal.css'
+import { Reservation } from '../api/reservation'
 
 interface ReservationCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  onRegister: (reservation: { name: string; people: number; date: string }) => void
+  onRegister: (reservation: Omit<Reservation, 'id' | 'reservationId' | 'createdAt' | 'status'>) => void
 }
 
 function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCreateModalProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    people: '',
-    date: ''
+    customerName: '',
+    phoneNumber: '',
+    numberOfGuests: '',
+    reservationTime: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.name && formData.people && formData.date) {
+    if (formData.customerName && formData.phoneNumber && formData.numberOfGuests && formData.reservationTime) {
       onRegister({
-        name: formData.name,
-        people: parseInt(formData.people),
-        date: formData.date
+        customerName: formData.customerName,
+        phoneNumber: formData.phoneNumber,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        reservationTime: new Date(formData.reservationTime)
       })
-      // 폼 초기화
-      setFormData({ name: '', people: '', date: '' })
+      setFormData({ customerName: '', phoneNumber: '', numberOfGuests: '', reservationTime: '' })
     }
   }
 
@@ -42,29 +44,42 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
         <form onSubmit={handleSubmit}>
           {/* 예약자명 */}
           <div className="input-group">
-            <label htmlFor="name">예약자명</label>
+            <label htmlFor="customerName">고객명</label>
             <div className="input-wrapper">
               <input
-                id="name"
-                name="name"
+                id="customerName"
+                name="customerName"
                 type="text"
-                value={formData.name}
+                value={formData.customerName}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>
 
-          {/* 인원수 */}
           <div className="input-group">
-            <label htmlFor="people">인원수</label>
+            <label htmlFor="phoneNumber">연락처</label>
             <div className="input-wrapper">
               <input
-                id="people"
-                name="people"
+                id="phoneNumber"
+                name="phoneNumber"
+                type="text"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="numberOfGuests">인원</label>
+            <div className="input-wrapper">
+              <input
+                id="numberOfGuests"
+                name="numberOfGuests"
                 type="number"
                 min="1"
-                value={formData.people}
+                value={formData.numberOfGuests}
                 onChange={handleChange}
                 required
               />
@@ -77,9 +92,9 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
             <div className="input-wrapper">
               <input
                 id="date"
-                name="date"
+                name="reservationTime"
                 type="date"
-                value={formData.date}
+                value={formData.reservationTime}
                 onChange={handleChange}
                 required
               />
@@ -102,4 +117,3 @@ function ReservationCreateModal({ isOpen, onClose, onRegister }: ReservationCrea
 }
 
 export default ReservationCreateModal
-
