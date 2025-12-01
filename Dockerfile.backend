@@ -1,11 +1,11 @@
 # Stage 1: Build the application
-FROM gradle:8.5.0-jdk17-alpine AS builder
+FROM gradle:8.5.0-jdk17 AS builder
 WORKDIR /app
 COPY . .
 RUN gradle build --no-daemon
 
 # Stage 2: Create the final image
-FROM eclipse-temurin:17-jdk-alpine
+FROM amazoncorretto:17-alpine-jdk
 WORKDIR /app
 COPY --from=builder /app/build/libs/UniBar-1.0-SNAPSHOT.jar ./app.jar
 EXPOSE 8080
