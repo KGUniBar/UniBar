@@ -181,7 +181,7 @@ function Dashboard() {
             <h2 className="chart-title">시간대별 매출</h2>
             <iframe
               title="시간대별 매출"
-              src="http://localhost:3000/public/question/602cb48a-735f-438e-b985-e4e32daa76a1"
+              src="http://localhost:3000/public/question/f6213aa6-ff97-490f-be52-49a5b62230c1"
               frameBorder="0"
               width="100%"
               height="400"
