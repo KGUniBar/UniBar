@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../App.css'
+import logo from '../assets/logo1.png'
 import { login, type LoginRequest } from '../api/client'
 import SignupModal from '../components/SignupModal'
 import ResetPasswordModal from '../components/ResetPasswordModal'
@@ -45,10 +46,8 @@ function Login() {
 
   return (
     <div className="login-container">
-      {/* 우측 상단 로고 위치 버튼 */}
-      <button className="logo-button">
-        로고 위치
-      </button>
+      {/* 로고 이미지 */}
+      <img src={logo} alt="KGUnibar Logo" className="login-logo" />
 
       {/* 로그인 폼 */}
       <div className="login-form">

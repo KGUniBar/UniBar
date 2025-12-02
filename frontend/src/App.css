@@ -11,25 +11,12 @@
   padding-top: 169px;
 }
 
-/* 우측 상단 로고 위치 버튼 */
-.logo-button {
-  position: absolute;
-  top: 169px;
-  right: calc(50% - 597px + 92px); /* 중앙 기준 우측 92px */
-  width: 131px;
-  height: 46px;
-  border: 1px solid #d9d9d9;
-  border-radius: 10px;
-  background-color: transparent;
-  color: #000000;
-  font-size: 20px;
-  font-weight: 400;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+/* 로고 이미지 */
+.login-logo {
+  margin-bottom: 40px;
+  width: 200px; /* 적절한 크기로 조절 */
+  height: auto;
+  object-fit: contain;
 }
 
 .logo-button:hover {
@@ -39,7 +26,7 @@
 /* 로그인 폼 */
 .login-form {
   width: 540px;
-  margin-top: 210px; /* 379px - 169px = 210px */
+  margin-top: 40px;
 }
 
 /* 입력 그룹 */
