@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import logo from '../assets/logo2.png'
 import './Sidebar.css'
 
 function Sidebar() {
@@ -41,7 +42,7 @@ function Sidebar() {
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-          LOGO
+          <img src={logo} alt="KGUnibar" className="sidebar-logo-image" />
         </div>
       </div>
       <div className="sidebar-menu">
